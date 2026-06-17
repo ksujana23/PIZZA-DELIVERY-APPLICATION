@@ -1,0 +1,104 @@
+/* FULL PAGE */
+
+.auth-page{
+  display:flex;
+  min-height:100vh;
+  font-family:'Inter', sans-serif;
+}
+
+
+/* LEFT SIDE */
+
+.auth-left{
+  width:45%;
+  background:#123847;
+  color:white;
+  padding:60px;
+
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.auth-logo{
+  font-size:24px;
+  font-family:'DM Serif Display', serif;
+}
+
+.auth-text h1{
+  font-size:52px;
+  font-family:'DM Serif Display', serif;
+  line-height:1.1;
+  font-weight:400;
+}
+
+.auth-text p{
+  margin-top:18px;
+  font-size:13px;
+  line-height:1.5;
+  color:#D7E3E6;
+  width:380px;
+  font-weight:400;
+}
+
+
+/* RIGHT SIDE */
+
+.auth-right{
+  width:55%;
+  background:#F5F7F2;
+  padding:100px;
+
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+
+/* TOGGLE */
+
+.auth-toggle{
+  display:flex;
+  background:#E7ECE6;
+  width:220px;
+  border-radius:40px;
+  padding:5px;
+  margin-bottom:40px;
+}
+
+.auth-toggle button{
+  flex:1;
+  padding:12px;
+  border:none;
+  border-radius:30px;
+  background:none;
+}
+
+.active-tab{
+  background:white !important;
+}
+
+
+/* INPUTS */
+
+.auth-right input{
+  margin-bottom:18px;
+  padding:18px;
+  border:none;
+  border-radius:14px;
+  font-size:16px;
+}
+
+
+/* BUTTON */
+
+.auth-btn{
+  margin-top:10px;
+  background:#EF4444;
+  color:white;
+  padding:18px;
+  border:none;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:600;
+}
