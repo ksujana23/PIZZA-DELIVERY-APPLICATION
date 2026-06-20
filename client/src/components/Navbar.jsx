@@ -1,79 +1,46 @@
 import { Link, useNavigate } from "react-router-dom";
 
 function Navbar() {
-
   const navigate = useNavigate();
 
-  // check login
-  const isLoggedIn = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
-  // logout function
   const handleLogout = () => {
     localStorage.removeItem("token");
-
-    // optional cleanup
-    localStorage.removeItem("currentOrder");
-    localStorage.removeItem("customOrder");
-
-    navigate("/");
-
-    // refresh navbar immediately
-    window.location.reload();
+    navigate("/auth");
   };
 
   return (
     <nav className="navbar">
 
-      {/* Left */}
+      {/* LEFT */}
       <div className="nav-left">
         <div className="logo-circle">🍕</div>
-        <span className="brand-name">
-          Slice & Co.
-        </span>
+        <span className="brand-name">Slice & Co.</span>
       </div>
 
-      {/* Center */}
-
+      {/* CENTER */}
       <div className="nav-center">
 
         <Link to="/">Home</Link>
 
-        {isLoggedIn && (
+        {token && (
           <>
             <Link to="/menu">Menu</Link>
-
-            <Link to="/build">
-              Build a Pizza
-            </Link>
-
-            <Link to="/orders">
-              My Orders
-            </Link>
+            <Link to="/build">Build a Pizza</Link>
+            <Link to="/orders">My Orders</Link>
           </>
         )}
 
       </div>
 
-
-      {/* Right */}
-
+      {/* RIGHT */}
       <div className="nav-right">
 
-        {!isLoggedIn ? (
-          <>
-            <Link
-              to="/auth"
-              className="login-link"
-            >
-              Log in
-            </Link>
-
-            <Link to="/menu">
-              <button className="order-btn">
-                Order now
-              </button>
-            </Link>
-          </>
+        {!token ? (
+          <Link to="/auth" className="login-link">
+            Log in
+          </Link>
         ) : (
           <button
             className="order-btn"

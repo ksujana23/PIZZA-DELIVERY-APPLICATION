@@ -226,9 +226,19 @@ const handlePayment = () => {
           <h3>Total ₹{total}</h3>
 
         <button
-         onClick={() => setShowPayment(true)}
-          disabled={!(base && sauce && cheese)}
-        > 
+  onClick={() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Please login first");
+      navigate("/auth");
+      return;
+    }
+
+    setShowPayment(true);
+  }}
+  disabled={!(base && sauce && cheese)}
+> 
            {base && sauce && cheese
               ? "Checkout"
               : "Complete steps 1-3"}

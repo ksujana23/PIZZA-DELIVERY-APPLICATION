@@ -16,10 +16,18 @@ function PizzaMenu() {
   const [processing, setProcessing] = useState(false);
 
   // when user clicks order now
-  const handleOrder = (pizza) => {
-    setSelectedPizza(pizza);
-    setShowPayment(true);
-  };
+const handleOrder = (pizza) => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    alert("Please login first");
+    navigate("/auth");
+    return;
+  }
+
+  setSelectedPizza(pizza);
+  setShowPayment(true);
+};
 
   // after payment
   const handlePayment = () => {
