@@ -27,26 +27,24 @@ const handlePayment = () => {
   setProcessing(true);
 
   setTimeout(() => {
-    const oldOrders =
-      JSON.parse(localStorage.getItem("orders")) || [];
 
-    const newOrder = {
-      ...selectedPizza,
-      status: "Preparing 🍕",
-      time: "25 mins"
-    };
-
-    oldOrders.push(newOrder);
+    localStorage.removeItem("customOrder");
 
     localStorage.setItem(
-      "orders",
-      JSON.stringify(oldOrders)
+      "currentOrder",
+      JSON.stringify(selectedPizza)
+    );
+
+    console.log(
+      "Saved order:",
+      localStorage.getItem("currentOrder")
     );
 
     setProcessing(false);
     setShowPayment(false);
 
     navigate("/orders");
+
   }, 2000);
 };
 
@@ -175,7 +173,7 @@ const handlePayment = () => {
       </button>
 
     </div>
-    
+
   </div>
 )}
 
