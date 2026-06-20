@@ -17,14 +17,9 @@ function PizzaMenu() {
 
 const handleOrder = (pizza) => {
 
-  localStorage.removeItem("customOrder");
+  setSelectedPizza(pizza);
 
-  localStorage.setItem(
-    "currentOrder",
-    JSON.stringify(pizza)
-  );
-
-  navigate("/orders");
+  setShowPayment(true);
 };
 
 
@@ -180,7 +175,7 @@ const handlePayment = () => {
       </button>
 
     </div>
-
+    
   </div>
 )}
 

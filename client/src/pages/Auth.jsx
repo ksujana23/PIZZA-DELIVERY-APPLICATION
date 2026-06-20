@@ -16,7 +16,7 @@ function Auth() {
     try {
       if (isLogin) {
         const res = await axios.post(
-          "http://localhost:5000/api/auth/login",
+          "https://pizza-backend-j05r.onrender.com/api/auth/login",
           { email, password }
         );
 
@@ -26,7 +26,7 @@ function Auth() {
 
       } else {
         await axios.post(
-          "http://localhost:5000/api/auth/register",
+          "https://pizza-backend-j05r.onrender.com/api/auth/register",
           { name, email, password }
         );
 
