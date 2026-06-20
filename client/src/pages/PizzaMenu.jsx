@@ -9,44 +9,43 @@ import fourcheese from "../assets/fourcheese.png";
 import bbq from "../assets/bbqchicken.png";
 
 function PizzaMenu() {
-
   const navigate = useNavigate();
+
   const [showPayment, setShowPayment] = useState(false);
   const [selectedPizza, setSelectedPizza] = useState(null);
   const [processing, setProcessing] = useState(false);
 
-const handleOrder = (pizza) => {
+  // when user clicks order now
+  const handleOrder = (pizza) => {
+    setSelectedPizza(pizza);
+    setShowPayment(true);
+  };
 
-  setSelectedPizza(pizza);
+  // after payment
+  const handlePayment = () => {
+    setProcessing(true);
 
-  setShowPayment(true);
-};
+    setTimeout(() => {
+      // remove custom pizza if ordering from menu
+      localStorage.removeItem("customOrder");
 
+      // save selected menu pizza
+      localStorage.setItem(
+        "currentOrder",
+        JSON.stringify(selectedPizza)
+      );
 
-const handlePayment = () => {
-  setProcessing(true);
+      console.log(
+        "Saved order:",
+        localStorage.getItem("currentOrder")
+      );
 
-  setTimeout(() => {
+      setProcessing(false);
+      setShowPayment(false);
 
-    localStorage.removeItem("customOrder");
-
-    localStorage.setItem(
-      "currentOrder",
-      JSON.stringify(selectedPizza)
-    );
-
-    console.log(
-      "Saved order:",
-      localStorage.getItem("currentOrder")
-    );
-
-    setProcessing(false);
-    setShowPayment(false);
-
-    navigate("/orders");
-
-  }, 2000);
-};
+      navigate("/orders");
+    }, 2000);
+  };
 
   const pizzas = [
     {
@@ -92,9 +91,7 @@ const handlePayment = () => {
       <Navbar />
 
       <section className="menu-page">
-
         <div className="menu-header">
-
           <div>
             <h1>Our Menu</h1>
             <p>Pick a chef's favorite or craft your own.</p>
@@ -106,18 +103,14 @@ const handlePayment = () => {
           >
             Build your own
           </button>
-
         </div>
 
         <div className="menu-grid">
-
           {pizzas.map((pizza, index) => (
             <div key={index} className="menu-card">
-
               <img src={pizza.image} alt="pizza" />
 
               <div className="menu-content">
-
                 <div className="menu-top-row">
                   <h3>{pizza.name}</h3>
                   <span>₹{pizza.price}</span>
@@ -128,55 +121,45 @@ const handlePayment = () => {
                 <button
                   className="order-now"
                   onClick={() => handleOrder(pizza)}
-               >
+                >
                   Order now
                 </button>
-
               </div>
-
             </div>
           ))}
-
         </div>
-
       </section>
-    
-    {showPayment && (
-  <div className="payment-overlay">
 
-    <div className="payment-box">
+      {/* PAYMENT POPUP */}
+      {showPayment && (
+        <div className="payment-overlay">
+          <div className="payment-box">
+            <h2>Secure Checkout</h2>
 
-      <h2>Secure Checkout</h2>
+            <p>{selectedPizza?.name}</p>
+            <p>Total ₹{selectedPizza?.price}</p>
 
-      <p>{selectedPizza?.name}</p>
-      <p>Total ₹{selectedPizza?.price}</p>
+            <input placeholder="4242 4242 4242 4242" />
 
-      <input
-        placeholder="4242 4242 4242 4242"
-      />
+            <div className="payment-row">
+              <input placeholder="12/30" />
+              <input placeholder="123" />
+            </div>
 
-      <div className="payment-row">
-        <input placeholder="12/30" />
-        <input placeholder="123" />
-      </div>
+            <button onClick={handlePayment}>
+              {processing
+                ? "Processing payment..."
+                : `Pay ₹${selectedPizza?.price}`}
+            </button>
 
-      <button onClick={handlePayment}>
-        {processing
-          ? "Processing payment..."
-          : `Pay ₹${selectedPizza?.price}`}
-      </button>
-
-      <button
-        onClick={() => setShowPayment(false)}
-      >
-        Cancel
-      </button>
-
-    </div>
-
-  </div>
-)}
-
+            <button
+              onClick={() => setShowPayment(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
