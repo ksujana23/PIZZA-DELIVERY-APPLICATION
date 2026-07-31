@@ -287,8 +287,8 @@ Possible future upgrades:
 B.Tech Computer Science Engineering  
 GITAM University  
 
-GitHub: (your github link)  
-LinkedIn: (your linkedin link)
+GitHub: https://github.com/ksujana23
+LinkedIn: https://www.linkedin.com/in/sujana-kasarapu-593b5b284/
 
 ---
 
