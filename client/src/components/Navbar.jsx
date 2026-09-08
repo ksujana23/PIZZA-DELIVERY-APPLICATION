@@ -28,6 +28,7 @@ function Navbar() {
             <Link to="/menu">Menu</Link>
             <Link to="/recommend">Recommend</Link>
             <Link to="/build">Build a Pizza</Link>
+            <Link to="/mystery">Mystery Pizza</Link>
             <Link to="/orders">My Orders</Link>
           </>
         )}
