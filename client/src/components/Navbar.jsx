@@ -21,22 +21,20 @@ function Navbar() {
 
       {/* CENTER */}
       <div className="nav-center">
-
         <Link to="/">Home</Link>
 
         {token && (
           <>
             <Link to="/menu">Menu</Link>
+            <Link to="/recommend">Recommend</Link>
             <Link to="/build">Build a Pizza</Link>
             <Link to="/orders">My Orders</Link>
           </>
         )}
-
       </div>
 
       {/* RIGHT */}
       <div className="nav-right">
-
         {!token ? (
           <Link to="/auth" className="login-link">
             Log in
@@ -49,7 +47,6 @@ function Navbar() {
             Sign out
           </button>
         )}
-
       </div>
 
     </nav>

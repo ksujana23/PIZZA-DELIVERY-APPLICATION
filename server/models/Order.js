@@ -26,6 +26,37 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: "Pending",
     },
+
+    customDetails: {
+      base: {
+        type: String,
+      },
+
+      sauce: {
+        type: String,
+      },
+
+      cheese: {
+        type: String,
+      },
+
+      veggies: {
+        type: [String],
+        default: [],
+      },
+    },
+
+    ingredients: [
+      {
+        name: {
+          type: String,
+        },
+
+        quantity: {
+          type: Number,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

@@ -1,0 +1,292 @@
+/* ============================= */
+/* ORDERS PAGE */
+/* ============================= */
+
+.orders-page {
+  min-height: 100vh;
+  background: #f8f8f5;
+  padding: 70px 8% 100px;
+}
+
+
+/* ============================= */
+/* HEADER */
+/* ============================= */
+
+.orders-header {
+  max-width: 850px;
+  margin-bottom: 55px;
+}
+
+.orders-label {
+  color: #f05a47;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  margin-bottom: 12px;
+}
+
+.orders-header h1 {
+  font-family: Georgia, serif;
+  font-size: 54px;
+  line-height: 1.05;
+  color: #102f3c;
+  margin: 0 0 15px;
+}
+
+.orders-header h1 span {
+  color: #f05a47;
+}
+
+.orders-subtitle {
+  color: #64747b;
+  font-size: 17px;
+  margin: 0;
+}
+
+
+/* ============================= */
+/* ORDERS LIST */
+/* ============================= */
+
+.orders-list {
+  max-width: 950px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+
+/* ============================= */
+/* ORDER CARD */
+/* ============================= */
+
+.order-card {
+  background: white;
+  border: 1px solid #e5e8e5;
+  border-radius: 22px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(25, 45, 50, 0.06);
+  transition: transform 0.2s ease,
+              box-shadow 0.2s ease;
+}
+
+.order-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px rgba(25, 45, 50, 0.1);
+}
+
+
+/* ============================= */
+/* CARD TOP */
+/* ============================= */
+
+.order-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.order-number {
+  color: #7b898d;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.order-status {
+  padding: 7px 14px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.order-status.pending {
+  background: #fff3df;
+  color: #b87517;
+}
+
+.order-status.completed {
+  background: #e6f5ec;
+  color: #28794c;
+}
+
+
+/* ============================= */
+/* PIZZA TITLE */
+/* ============================= */
+
+.pizza-order-title {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  margin-bottom: 25px;
+}
+
+.pizza-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  background: #fff0ec;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 28px;
+}
+
+.pizza-order-title h2 {
+  margin: 0 0 5px;
+  color: #102f3c;
+  font-family: Georgia, serif;
+  font-size: 25px;
+}
+
+.pizza-order-title p {
+  margin: 0;
+  color: #879398;
+  font-size: 14px;
+}
+
+
+/* ============================= */
+/* ORDER INFO */
+/* ============================= */
+
+.order-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+
+  background: #f8f9f7;
+  border-radius: 15px;
+  padding: 18px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-item span {
+  color: #89959a;
+  font-size: 12px;
+}
+
+.info-item strong {
+  color: #193c49;
+  font-size: 16px;
+}
+
+.total-item strong {
+  color: #f05a47;
+  font-size: 19px;
+}
+
+
+/* ============================= */
+/* CUSTOM DETAILS */
+/* ============================= */
+
+.custom-details {
+  margin-top: 22px;
+  padding: 22px;
+  border-radius: 16px;
+  background: #fff8f5;
+  border: 1px solid #f5ddd5;
+}
+
+.custom-details h3 {
+  margin: 0 0 18px;
+  color: #193c49;
+  font-family: Georgia, serif;
+  font-size: 18px;
+}
+
+.custom-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.custom-grid div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.custom-grid span {
+  color: #999;
+  font-size: 12px;
+}
+
+.custom-grid strong {
+  color: #294650;
+  font-size: 14px;
+}
+
+
+/* ============================= */
+/* EMPTY / LOADING */
+/* ============================= */
+
+.orders-message {
+  max-width: 600px;
+  background: white;
+  border-radius: 22px;
+  padding: 60px 30px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(25, 45, 50, 0.06);
+}
+
+.message-icon {
+  font-size: 45px;
+  margin-bottom: 15px;
+}
+
+.orders-message h2 {
+  font-family: Georgia, serif;
+  color: #193c49;
+  margin-bottom: 8px;
+}
+
+.orders-message p {
+  color: #7c898d;
+}
+
+
+/* ============================= */
+/* MOBILE */
+/* ============================= */
+
+@media (max-width: 768px) {
+
+  .orders-page {
+    padding: 45px 5% 70px;
+  }
+
+  .orders-header h1 {
+    font-size: 40px;
+  }
+
+  .order-card {
+    padding: 22px;
+  }
+
+  .order-info {
+    grid-template-columns: 1fr;
+  }
+
+  .custom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-card-top {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+}

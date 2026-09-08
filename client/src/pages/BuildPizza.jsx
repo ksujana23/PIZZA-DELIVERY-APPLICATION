@@ -3,23 +3,25 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 function BuildPizza() {
-
   const [base, setBase] = useState(null);
   const [sauce, setSauce] = useState(null);
   const [cheese, setCheese] = useState(null);
   const [veggies, setVeggies] = useState([]);
   const [showPayment, setShowPayment] = useState(false);
   const [processing, setProcessing] = useState(false);
+
   const navigate = useNavigate();
 
+  // ===============================
   // OPTIONS
+  // ===============================
 
   const baseOptions = [
     { name: "Cheese Burst", price: 180 },
     { name: "Gluten Free", price: 200 },
     { name: "Thick Crust", price: 130 },
     { name: "Thin Crust", price: 120 },
-    { name: "Whole Wheat", price: 140 }
+    { name: "Whole Wheat", price: 140 },
   ];
 
   const sauceOptions = [
@@ -27,14 +29,14 @@ function BuildPizza() {
     { name: "BBQ", price: 45 },
     { name: "Classic Tomato", price: 30 },
     { name: "Pesto Basil", price: 50 },
-    { name: "Spicy Arrabbiata", price: 40 }
+    { name: "Spicy Arrabbiata", price: 40 },
   ];
 
   const cheeseOptions = [
     { name: "Cheddar", price: 65 },
     { name: "Mozzarella", price: 60 },
     { name: "Parmesan", price: 80 },
-    { name: "Vegan Cheese", price: 90 }
+    { name: "Vegan Cheese", price: 90 },
   ];
 
   const veggieOptions = [
@@ -45,22 +47,32 @@ function BuildPizza() {
     { name: "Onions", price: 15 },
     { name: "Spinach", price: 25 },
     { name: "Sweet Corn", price: 20 },
-    { name: "Tomatoes", price: 15 }
+    { name: "Tomatoes", price: 15 },
   ];
 
+  // ===============================
   // VEGGIE TOGGLE
+  // ===============================
 
   const toggleVeggie = (item) => {
-    const exists = veggies.find((veg) => veg.name === item.name);
+    const exists = veggies.find(
+      (veg) => veg.name === item.name
+    );
 
     if (exists) {
-      setVeggies(veggies.filter((veg) => veg.name !== item.name));
+      setVeggies(
+        veggies.filter(
+          (veg) => veg.name !== item.name
+        )
+      );
     } else {
       setVeggies([...veggies, item]);
     }
   };
 
+  // ===============================
   // TOTAL
+  // ===============================
 
   const veggieTotal = veggies.reduce(
     (sum, item) => sum + item.price,
@@ -72,32 +84,171 @@ function BuildPizza() {
     (sauce?.price || 0) +
     (cheese?.price || 0) +
     veggieTotal;
-  
-const handlePayment = () => {
-  setProcessing(true);
 
-  setTimeout(() => {
+  // ===============================
+  // CREATE INGREDIENT LIST
+  // ===============================
 
-    // save custom pizza
-    localStorage.setItem(
-      "customOrder",
-      JSON.stringify({
-        name: "Custom Pizza 🍕",
-        price: total,
-        base: base?.name,
-        sauce: sauce?.name,
-        cheese: cheese?.name,
-        veggies: veggies.map((veg) => veg.name)
-      })
-    );
+  const createIngredients = () => {
+    const ingredients = [];
 
-    // remove old normal pizza order
-    localStorage.removeItem("currentOrder");
+    // Every pizza needs dough
+    ingredients.push({
+      name: "Dough",
+      quantity: 0.2,
+    });
 
-    navigate("/orders");
+    // Every pizza needs cheese
+    ingredients.push({
+      name: "Cheese",
+      quantity: 0.15,
+    });
 
-  }, 2500);
-};
+    // Sauce mapping
+    if (sauce) {
+      const sauceMap = {
+        "Classic Tomato": "Tomato Sauce",
+        BBQ: "BBQ Sauce",
+        "Alfredo White": "Alfredo Sauce",
+        "Pesto Basil": "Pesto Sauce",
+        "Spicy Arrabbiata": "Arrabbiata Sauce",
+      };
+
+      ingredients.push({
+        name: sauceMap[sauce.name],
+        quantity: 0.1,
+      });
+    }
+
+    // Pesto Basil also needs basil
+    if (sauce?.name === "Pesto Basil") {
+      ingredients.push({
+        name: "Basil",
+        quantity: 0.02,
+      });
+    }
+
+    // Veggie mapping
+    const veggieMap = {
+      "Bell Peppers": "Capsicum",
+      "Black Olives": "Olives",
+      Jalapenos: "Jalapeno",
+      Mushrooms: "Mushroom",
+      Onions: "Onion",
+      Spinach: "Spinach",
+      "Sweet Corn": "Corn",
+      Tomatoes: "Tomato",
+    };
+
+    veggies.forEach((veg) => {
+      ingredients.push({
+        name: veggieMap[veg.name],
+        quantity: 0.05,
+      });
+    });
+
+    return ingredients;
+  };
+
+  // ===============================
+  // PAYMENT
+  // ===============================
+
+  const handlePayment = () => {
+    setProcessing(true);
+
+    setTimeout(async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          alert("Please login first");
+          setProcessing(false);
+          navigate("/auth");
+          return;
+        }
+
+        const ingredients = createIngredients();
+
+        const response = await fetch(
+          "http://localhost:5000/api/orders/place",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: token,
+              pizzaName: "Custom Pizza",
+              quantity: 1,
+              totalPrice: total,
+              ingredients: ingredients,
+              customDetails: {
+                base: base?.name,
+                sauce: sauce?.name,
+                cheese: cheese?.name,
+                veggies: veggies.map(
+                  (veg) => veg.name
+                ),
+              },
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Failed to place order");
+          setProcessing(false);
+          return;
+        }
+
+        console.log(
+          "Custom order saved:",
+          data
+        );
+
+        // Save custom order for Orders page
+        localStorage.setItem(
+          "customOrder",
+          JSON.stringify({
+            name: "Custom Pizza 🍕",
+            price: total,
+            base: base?.name,
+            sauce: sauce?.name,
+            cheese: cheese?.name,
+            veggies: veggies.map(
+              (veg) => veg.name
+            ),
+          })
+        );
+
+        // Remove normal pizza order
+        localStorage.removeItem("currentOrder");
+
+        setProcessing(false);
+        setShowPayment(false);
+
+        navigate("/orders");
+
+      } catch (error) {
+        console.error(
+          "Custom order error:",
+          error
+        );
+
+        alert(
+          "Something went wrong while placing the order"
+        );
+
+        setProcessing(false);
+      }
+    }, 2000);
+  };
+
+  // ===============================
+  // UI
+  // ===============================
 
   return (
     <>
@@ -110,89 +261,141 @@ const handlePayment = () => {
         <div className="build-left">
 
           <h1>Build Your Pizza</h1>
-          <p>Follow the steps to craft your perfect slice.</p>
+
+          <p>
+            Follow the steps to craft your
+            perfect slice.
+          </p>
 
           {/* STEP 1 */}
 
           <div className="builder-section">
-            <h3>🔴 1 Choose your Pizza Base</h3>
+
+            <h3>
+              🔴 1 Choose your Pizza Base
+            </h3>
 
             <div className="option-grid">
 
               {baseOptions.map((item) => (
                 <div
-                  className={`option-card ${base?.name === item.name ? "selected" : ""}`}
-                  onClick={() => setBase(item)}
+                  key={item.name}
+                  className={`option-card ${
+                    base?.name === item.name
+                      ? "selected"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setBase(item)
+                  }
                 >
                   {item.name}
-                  <span>+₹{item.price}</span>
+
+                  <span>
+                    +₹{item.price}
+                  </span>
                 </div>
               ))}
 
             </div>
           </div>
 
-
           {/* STEP 2 */}
 
           <div className="builder-section">
-            <h3>🔴 2 Pick a Sauce</h3>
+
+            <h3>
+              🔴 2 Pick a Sauce
+            </h3>
 
             <div className="option-grid">
 
               {sauceOptions.map((item) => (
                 <div
-                  className={`option-card ${sauce?.name === item.name ? "selected" : ""}`}
-                  onClick={() => setSauce(item)}
+                  key={item.name}
+                  className={`option-card ${
+                    sauce?.name === item.name
+                      ? "selected"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setSauce(item)
+                  }
                 >
                   {item.name}
-                  <span>+₹{item.price}</span>
+
+                  <span>
+                    +₹{item.price}
+                  </span>
                 </div>
               ))}
 
             </div>
           </div>
 
-
           {/* STEP 3 */}
 
           <div className="builder-section">
-            <h3>🔴 3 Select a Cheese</h3>
+
+            <h3>
+              🔴 3 Select a Cheese
+            </h3>
 
             <div className="option-grid">
 
               {cheeseOptions.map((item) => (
                 <div
-                  className={`option-card ${cheese?.name === item.name ? "selected" : ""}`}
-                  onClick={() => setCheese(item)}
+                  key={item.name}
+                  className={`option-card ${
+                    cheese?.name === item.name
+                      ? "selected"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setCheese(item)
+                  }
                 >
                   {item.name}
-                  <span>+₹{item.price}</span>
+
+                  <span>
+                    +₹{item.price}
+                  </span>
                 </div>
               ))}
 
             </div>
           </div>
 
-
           {/* STEP 4 */}
 
           <div className="builder-section">
-            <h3>🔴 4 Add Veggies (optional)</h3>
+
+            <h3>
+              🔴 4 Add Veggies (optional)
+            </h3>
 
             <div className="veggie-grid">
 
               {veggieOptions.map((item) => (
                 <div
+                  key={item.name}
                   className={`option-card ${
-                    veggies.find((veg) => veg.name === item.name)
+                    veggies.find(
+                      (veg) =>
+                        veg.name === item.name
+                    )
                       ? "selected"
                       : ""
                   }`}
-                  onClick={() => toggleVeggie(item)}
+                  onClick={() =>
+                    toggleVeggie(item)
+                  }
                 >
                   {item.name}
-                  <span>+₹{item.price}</span>
+
+                  <span>
+                    +₹{item.price}
+                  </span>
                 </div>
               ))}
 
@@ -200,7 +403,6 @@ const handlePayment = () => {
           </div>
 
         </div>
-
 
         {/* RIGHT SIDE */}
 
@@ -208,89 +410,119 @@ const handlePayment = () => {
 
           <h2>🍕 Your Pizza</h2>
 
-          <p>Base: {base?.name || "—"}</p>
+          <p>
+            Base:{" "}
+            {base?.name || "—"}
+          </p>
 
-          <p>Sauce: {sauce?.name || "—"}</p>
+          <p>
+            Sauce:{" "}
+            {sauce?.name || "—"}
+          </p>
 
-          <p>Cheese: {cheese?.name || "—"}</p>
+          <p>
+            Cheese:{" "}
+            {cheese?.name || "—"}
+          </p>
 
           <p>
             Veggies:{" "}
             {veggies.length > 0
-              ? veggies.map((veg) => veg.name).join(", ")
+              ? veggies
+                  .map((veg) => veg.name)
+                  .join(", ")
               : "None selected"}
           </p>
 
           <hr />
 
-          <h3>Total ₹{total}</h3>
+          <h3>
+            Total ₹{total}
+          </h3>
 
-        <button
-  onClick={() => {
-    const token = localStorage.getItem("token");
+          <button
+            onClick={() => {
+              const token =
+                localStorage.getItem("token");
 
-    if (!token) {
-      alert("Please login first");
-      navigate("/auth");
-      return;
-    }
+              if (!token) {
+                alert("Please login first");
+                navigate("/auth");
+                return;
+              }
 
-    setShowPayment(true);
-  }}
-  disabled={!(base && sauce && cheese)}
-> 
-           {base && sauce && cheese
+              setShowPayment(true);
+            }}
+            disabled={
+              !(base && sauce && cheese)
+            }
+          >
+            {base && sauce && cheese
               ? "Checkout"
               : "Complete steps 1-3"}
-         </button>
+          </button>
 
         </div>
 
-      {showPayment && (
+        {/* PAYMENT */}
 
-  <div className="payment-overlay">
+        {showPayment && (
 
-    <div className="payment-box">
+          <div className="payment-overlay">
 
-      <h2>Secure Checkout</h2>
+            <div className="payment-box">
 
-      <p>Total ₹{total}</p>
+              <h2>
+                Secure Checkout
+              </h2>
 
-      <input
-        type="text"
-        placeholder="Card Number"
-      />
+              <p>
+                Custom Pizza
+              </p>
 
-      <input
-        type="text"
-        placeholder="Expiry MM/YY"
-      />
+              <p>
+                Total ₹{total}
+              </p>
 
-      <input
-        type="text"
-        placeholder="CVC"
-      />
+              <input
+                type="text"
+                placeholder="Card Number"
+              />
 
-      <button onClick={handlePayment}>
+              <input
+                type="text"
+                placeholder="Expiry MM/YY"
+              />
 
-  {processing
-    ? "Processing payment..."
-    : `Pay ₹${total}`}
+              <input
+                type="text"
+                placeholder="CVC"
+              />
 
-</button>
+              <button
+                onClick={handlePayment}
+                disabled={processing}
+              >
+                {processing
+                  ? "Processing payment..."
+                  : `Pay ₹${total}`}
+              </button>
 
-      <button
-        className="close-btn"
-        onClick={() => setShowPayment(false)}
-      >
-        Cancel
-      </button>
+              <button
+                className="close-btn"
+                onClick={() =>
+                  setShowPayment(false)
+                }
+                disabled={processing}
+              >
+                Cancel
+              </button>
 
-    </div>
+            </div>
 
-  </div>
+          </div>
 
-)}
+        )}
 
       </section>
     </>

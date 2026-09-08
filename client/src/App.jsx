@@ -5,6 +5,8 @@ import Auth from "./pages/Auth";          // ← ADD THIS
 import PizzaMenu from "./pages/PizzaMenu";
 import BuildPizza from "./pages/BuildPizza";
 import Orders from "./pages/Orders";
+import PizzaRecommendation from "./pages/PizzaRecommendation";
+import MysteryPizza from "./pages/MysteryPizza";
 
 function App() {
   return (
@@ -20,7 +22,8 @@ function App() {
         <Route path="/build" element={<BuildPizza />} />
 
         <Route path="/orders" element={<Orders />} />
-
+        <Route path="/recommend" element={<PizzaRecommendation />} />
+        <Route path="/mystery" element={<MysteryPizza />} />
       </Routes>
     </BrowserRouter>
   );

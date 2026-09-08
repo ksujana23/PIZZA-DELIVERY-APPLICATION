@@ -1,79 +1,236 @@
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
+import "./Orders.css";
 
 function Orders() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const menuOrder =
-    JSON.parse(localStorage.getItem("currentOrder"));
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/orders"
+        );
 
-  const customOrder =
-    JSON.parse(localStorage.getItem("customOrder"));
+        const data = await response.json();
 
-  const order = customOrder || menuOrder;
+        if (response.ok) {
+          setOrders(data);
+        } else {
+          console.error("Failed to fetch orders");
+        }
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   return (
     <>
       <Navbar />
 
-      <section className="orders-page">
+      <div className="orders-page">
 
-        <h1>My Orders</h1>
+        {/* HEADER */}
 
-        <p>Track your pizzas in real time.</p>
+        <div className="orders-header">
+          <p className="orders-label">ORDER HISTORY</p>
 
-        <div className="success-box">
+          <h1>
+            Your Pizza <span>Orders 🍕</span>
+          </h1>
 
-          <h3>✅ Order placed successfully!</h3>
-
-          {order ? (
-            <>
-
-              <h2>{order.name}</h2>
-
-              <p>
-                <strong>Price:</strong> ₹{order.price}
-              </p>
-
-              {/* ONLY show for custom pizza */}
-
-              {order.base && (
-                <>
-                  <p>
-                    <strong>Base:</strong> {order.base}
-                  </p>
-
-                  <p>
-                    <strong>Sauce:</strong> {order.sauce}
-                  </p>
-
-                  <p>
-                    <strong>Cheese:</strong> {order.cheese}
-                  </p>
-
-                  <p>
-                    <strong>Veggies:</strong>{" "}
-                    {order.veggies.length > 0
-                      ? order.veggies.join(", ")
-                      : "None"}
-                  </p>
-                </>
-              )}
-
-              <p>
-                <strong>Status:</strong> Preparing 👨‍🍳
-              </p>
-
-              <p>
-                <strong>Estimated delivery:</strong> 15 mins
-              </p>
-
-            </>
-          ) : (
-            <p>No order found.</p>
-          )}
-
+          <p className="orders-subtitle">
+            Every slice you've ordered, all in one place.
+          </p>
         </div>
 
-      </section>
+
+        {/* LOADING */}
+
+        {loading && (
+          <div className="orders-message">
+            <div className="message-icon">🍕</div>
+            <h2>Loading your orders...</h2>
+          </div>
+        )}
+
+
+        {/* NO ORDERS */}
+
+        {!loading && orders.length === 0 && (
+          <div className="orders-message">
+            <div className="message-icon">🍕</div>
+
+            <h2>No orders yet</h2>
+
+            <p>
+              Your delicious pizza journey starts here.
+            </p>
+          </div>
+        )}
+
+
+        {/* ORDERS */}
+
+        {!loading && orders.length > 0 && (
+          <div className="orders-list">
+
+            {orders.map((order, index) => (
+
+              <div
+                className="order-card"
+                key={order._id}
+              >
+
+                {/* TOP */}
+
+                <div className="order-card-top">
+
+                  <div className="order-number">
+                    ORDER #{orders.length - index}
+                  </div>
+
+                  <div
+                    className={`order-status ${
+                      order.status?.toLowerCase() ===
+                      "pending"
+                        ? "pending"
+                        : "completed"
+                    }`}
+                  >
+                    ● {order.status}
+                  </div>
+
+                </div>
+
+
+                {/* PIZZA NAME */}
+
+                <div className="pizza-order-title">
+
+                  <div className="pizza-icon">
+                    🍕
+                  </div>
+
+                  <div>
+                    <h2>
+                      {order.pizzaName}
+                    </h2>
+
+                    <p>
+                      {order.quantity} pizza
+                      {order.quantity > 1
+                        ? "s"
+                        : ""}
+                    </p>
+                  </div>
+
+                </div>
+
+
+                {/* BASIC DETAILS */}
+
+                <div className="order-info">
+
+                  <div className="info-item">
+                    <span>Quantity</span>
+
+                    <strong>
+                      {order.quantity}
+                    </strong>
+                  </div>
+
+                  <div className="info-item">
+                    <span>Ordered on</span>
+
+                    <strong>
+                      {new Date(
+                        order.createdAt
+                      ).toLocaleDateString()}
+                    </strong>
+                  </div>
+
+                  <div className="info-item total-item">
+                    <span>Total</span>
+
+                    <strong>
+                      ₹{order.totalPrice}
+                    </strong>
+                  </div>
+
+                </div>
+
+
+                {/* CUSTOM PIZZA */}
+
+                {order.pizzaName ===
+                  "Custom Pizza" &&
+                  order.customDetails && (
+
+                    <div className="custom-details">
+
+                      <h3>
+                        ✨ Your Custom Pizza
+                      </h3>
+
+                      <div className="custom-grid">
+
+                        <div>
+                          <span>Base</span>
+
+                          <strong>
+                            {order.customDetails.base}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>Sauce</span>
+
+                          <strong>
+                            {order.customDetails.sauce}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>Cheese</span>
+
+                          <strong>
+                            {order.customDetails.cheese}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>Veggies</span>
+
+                          <strong>
+                            {order.customDetails
+                              .veggies?.length > 0
+                              ? order.customDetails.veggies.join(
+                                  ", "
+                                )
+                              : "None"}
+                          </strong>
+                        </div>
+
+                      </div>
+
+                    </div>
+                  )}
+
+              </div>
+
+            ))}
+
+          </div>
+        )}
+
+      </div>
     </>
   );
 }
