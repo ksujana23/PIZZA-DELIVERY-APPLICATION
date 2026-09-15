@@ -9,11 +9,20 @@ function Orders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const token = localStorage.getItem("token");
+        // Get the actual MongoDB user ID
+        const userId = localStorage.getItem("userId");
 
-const response = await fetch(
-  `http://localhost:5000/api/orders?userId=${encodeURIComponent(token)}`
-);
+        if (!userId) {
+          console.error("User ID not found");
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(
+          `http://localhost:5000/api/orders?userId=${encodeURIComponent(
+            userId
+          )}`
+        );
 
         const data = await response.json();
 
@@ -52,7 +61,6 @@ const response = await fetch(
           </p>
         </div>
 
-
         {/* LOADING */}
 
         {loading && (
@@ -61,7 +69,6 @@ const response = await fetch(
             <h2>Loading your orders...</h2>
           </div>
         )}
-
 
         {/* NO ORDERS */}
 
@@ -76,7 +83,6 @@ const response = await fetch(
             </p>
           </div>
         )}
-
 
         {/* ORDERS */}
 
@@ -111,7 +117,6 @@ const response = await fetch(
 
                 </div>
 
-
                 {/* PIZZA NAME */}
 
                 <div className="pizza-order-title">
@@ -134,7 +139,6 @@ const response = await fetch(
                   </div>
 
                 </div>
-
 
                 {/* BASIC DETAILS */}
 
@@ -167,7 +171,6 @@ const response = await fetch(
                   </div>
 
                 </div>
-
 
                 {/* CUSTOM PIZZA */}
 
@@ -211,11 +214,8 @@ const response = await fetch(
                           <span>Veggies</span>
 
                           <strong>
-                            {order.customDetails
-                              .veggies?.length > 0
-                              ? order.customDetails.veggies.join(
-                                  ", "
-                                )
+                            {order.customDetails.veggies?.length > 0
+                              ? order.customDetails.veggies.join(", ")
                               : "None"}
                           </strong>
                         </div>

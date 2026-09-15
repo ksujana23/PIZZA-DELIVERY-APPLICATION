@@ -92,19 +92,16 @@ function BuildPizza() {
   const createIngredients = () => {
     const ingredients = [];
 
-    // Every pizza needs dough
     ingredients.push({
       name: "Dough",
       quantity: 0.2,
     });
 
-    // Every pizza needs cheese
     ingredients.push({
       name: "Cheese",
       quantity: 0.15,
     });
 
-    // Sauce mapping
     if (sauce) {
       const sauceMap = {
         "Classic Tomato": "Tomato Sauce",
@@ -120,7 +117,6 @@ function BuildPizza() {
       });
     }
 
-    // Pesto Basil also needs basil
     if (sauce?.name === "Pesto Basil") {
       ingredients.push({
         name: "Basil",
@@ -128,7 +124,6 @@ function BuildPizza() {
       });
     }
 
-    // Veggie mapping
     const veggieMap = {
       "Bell Peppers": "Capsicum",
       "Black Olives": "Olives",
@@ -159,11 +154,12 @@ function BuildPizza() {
 
     setTimeout(async () => {
       try {
-        const token = localStorage.getItem("token");
+        const userId = localStorage.getItem("userId");
 
-        if (!token) {
-          alert("Please login first");
+        if (!userId) {
+          alert("User information not found. Please login again.");
           setProcessing(false);
+          setShowPayment(false);
           navigate("/auth");
           return;
         }
@@ -178,7 +174,7 @@ function BuildPizza() {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              userId: token,
+              userId: userId,
               pizzaName: "Custom Pizza",
               quantity: 1,
               totalPrice: total,
@@ -198,7 +194,11 @@ function BuildPizza() {
         const data = await response.json();
 
         if (!response.ok) {
-          alert(data.message || "Failed to place order");
+          alert(
+            data.message ||
+              "Failed to place order"
+          );
+
           setProcessing(false);
           return;
         }
@@ -208,7 +208,6 @@ function BuildPizza() {
           data
         );
 
-        // Save custom order for Orders page
         localStorage.setItem(
           "customOrder",
           JSON.stringify({
@@ -223,8 +222,9 @@ function BuildPizza() {
           })
         );
 
-        // Remove normal pizza order
-        localStorage.removeItem("currentOrder");
+        localStorage.removeItem(
+          "currentOrder"
+        );
 
         setProcessing(false);
         setShowPayment(false);
@@ -442,11 +442,15 @@ function BuildPizza() {
 
           <button
             onClick={() => {
-              const token =
-                localStorage.getItem("token");
+              const userId =
+                localStorage.getItem(
+                  "userId"
+                );
 
-              if (!token) {
-                alert("Please login first");
+              if (!userId) {
+                alert(
+                  "Please login first"
+                );
                 navigate("/auth");
                 return;
               }

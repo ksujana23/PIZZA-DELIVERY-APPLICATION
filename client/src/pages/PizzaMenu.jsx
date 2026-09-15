@@ -37,118 +37,126 @@ function PizzaMenu() {
 
   // After payment
   const handlePayment = () => {
-  setProcessing(true);
+    setProcessing(true);
 
-  setTimeout(async () => {
-    try {
-      const token = localStorage.getItem("token");
+    setTimeout(async () => {
+      try {
+        const userId = localStorage.getItem("userId");
 
-      const response = await fetch(
-        "http://localhost:5000/api/orders/place",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: token,
-            pizzaName: selectedPizza.name,
-            quantity: 1,
-            totalPrice: selectedPizza.price,
-          }),
+        if (!userId) {
+          alert("User information not found. Please login again.");
+          setProcessing(false);
+          setShowPayment(false);
+          navigate("/auth");
+          return;
         }
-      );
 
-      const data = await response.json();
+        const response = await fetch(
+          "http://localhost:5000/api/orders/place",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: userId,
+              pizzaName: selectedPizza.name,
+              quantity: 1,
+              totalPrice: selectedPizza.price,
+            }),
+          }
+        );
 
-      if (!response.ok) {
-        alert(data.message || "Failed to place order");
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Failed to place order");
+          setProcessing(false);
+          return;
+        }
+
+        console.log("Order saved to MongoDB:", data);
+
+        localStorage.removeItem("customOrder");
+
+        localStorage.setItem(
+          "currentOrder",
+          JSON.stringify(selectedPizza)
+        );
+
         setProcessing(false);
-        return;
+        setShowPayment(false);
+
+        navigate("/orders");
+      } catch (error) {
+        console.error("Order error:", error);
+        alert("Something went wrong while placing the order");
+        setProcessing(false);
       }
-
-      console.log("Order saved to MongoDB:", data);
-
-      localStorage.removeItem("customOrder");
-
-      localStorage.setItem(
-        "currentOrder",
-        JSON.stringify(selectedPizza)
-      );
-
-      setProcessing(false);
-      setShowPayment(false);
-
-      navigate("/orders");
-    } catch (error) {
-      console.error("Order error:", error);
-      alert("Something went wrong while placing the order");
-      setProcessing(false);
-    }
-  }, 2000);
-};
+    }, 2000);
+  };
 
   const pizzas = [
     {
       name: "Classic Margherita",
       price: 399,
       desc: "Fresh mozzarella, tangy tomato sauce and fragrant basil on a thin crust.",
-      image: margherita
+      image: margherita,
     },
     {
       name: "Veggie Supreme",
       price: 449,
       desc: "Bell peppers, mushrooms, onions, olives and sweet corn galore.",
-      image: veggie
+      image: veggie,
     },
     {
       name: "Pepperoni Feast",
       price: 599,
       desc: "Loaded with spicy pepperoni and bubbling mozzarella cheese.",
-      image: pepperoni
+      image: pepperoni,
     },
     {
       name: "Spicy Paneer Tikka",
       price: 649,
       desc: "Marinated paneer, jalapenos and onions with a spicy kick.",
-      image: paneer
+      image: paneer,
     },
     {
       name: "Four Cheese",
       price: 799,
       desc: "A creamy blend of mozzarella, cheddar, parmesan and vegan cheese.",
-      image: fourcheese
+      image: fourcheese,
     },
     {
       name: "BBQ Chicken",
       price: 849,
       desc: "Smoky BBQ sauce, grilled chicken, red onion and fresh cilantro.",
-      image: bbq
+      image: bbq,
     },
     {
       name: "Corn & Cheese",
       price: 999,
       desc: "Sweet corn, mozzarella and a creamy cheese blend on a golden crust.",
-      image: corncheese
+      image: corncheese,
     },
     {
       name: "Mexican Fiesta",
       price: 1049,
       desc: "Jalapenos, capsicum, onions and Mexican herbs with melted cheese.",
-      image: mexican
+      image: mexican,
     },
     {
       name: "Mushroom Delight",
       price: 1199,
       desc: "Fresh mushrooms, onions and mozzarella for a rich earthy flavour.",
-      image: mushroom
+      image: mushroom,
     },
     {
       name: "Tandoori Chicken",
       price: 1249,
       desc: "Smoky tandoori chicken, onions, capsicum and mozzarella with Indian spices.",
-      image: tandoorichicken
-    }
+      image: tandoorichicken,
+    },
   ];
 
   return (
@@ -156,7 +164,6 @@ function PizzaMenu() {
       <Navbar />
 
       <section className="menu-page">
-
         <div className="menu-header">
           <div>
             <h1>Our Menu</h1>
@@ -172,7 +179,6 @@ function PizzaMenu() {
         </div>
 
         <div className="menu-grid">
-
           {pizzas.map((pizza, index) => (
             <div
               key={index}
@@ -184,7 +190,6 @@ function PizzaMenu() {
               />
 
               <div className="menu-content">
-
                 <div className="menu-top-row">
                   <h3>{pizza.name}</h3>
                   <span>₹{pizza.price}</span>
@@ -198,20 +203,16 @@ function PizzaMenu() {
                 >
                   Order now
                 </button>
-
               </div>
             </div>
           ))}
-
         </div>
       </section>
 
       {/* PAYMENT POPUP */}
       {showPayment && (
         <div className="payment-overlay">
-
           <div className="payment-box">
-
             <h2>Secure Checkout</h2>
 
             <p>{selectedPizza?.name}</p>
@@ -225,18 +226,14 @@ function PizzaMenu() {
             />
 
             <div className="payment-row">
-
-              <input
-                placeholder="12/30"
-              />
-
-              <input
-                placeholder="123"
-              />
-
+              <input placeholder="12/30" />
+              <input placeholder="123" />
             </div>
 
-            <button onClick={handlePayment}>
+            <button
+              onClick={handlePayment}
+              disabled={processing}
+            >
               {processing
                 ? "Processing payment..."
                 : `Pay ₹${selectedPizza?.price}`}
@@ -244,15 +241,13 @@ function PizzaMenu() {
 
             <button
               onClick={() => setShowPayment(false)}
+              disabled={processing}
             >
               Cancel
             </button>
-
           </div>
-
         </div>
       )}
-
     </>
   );
 }

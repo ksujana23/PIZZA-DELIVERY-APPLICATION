@@ -17,25 +17,48 @@ function Auth() {
       if (isLogin) {
         const res = await axios.post(
           "https://pizza-backend-j05r.onrender.com/api/auth/login",
-          { email, password }
+          {
+            email,
+            password,
+          }
         );
 
+        // Store JWT token
         localStorage.setItem("token", res.data.token);
+
+        // Store actual MongoDB user ID
+        localStorage.setItem("userId", res.data.user.id);
+
+        // Store user information
+        localStorage.setItem(
+          "user",
+          JSON.stringify(res.data.user)
+        );
+
         alert("Login successful");
+
         navigate("/menu");
 
       } else {
         await axios.post(
           "https://pizza-backend-j05r.onrender.com/api/auth/register",
-          { name, email, password }
+          {
+            name,
+            email,
+            password,
+          }
         );
 
         alert("Account created successfully");
+
         setIsLogin(true);
       }
 
     } catch (error) {
-      alert(error.response?.data?.message || "Something went wrong");
+      alert(
+        error.response?.data?.message ||
+        "Something went wrong"
+      );
     }
   };
 
@@ -50,7 +73,9 @@ function Auth() {
         </div>
 
         <div className="auth-text">
-          <h1>Great pizza is just a few clicks away.</h1>
+          <h1>
+            Great pizza is just a few clicks away.
+          </h1>
 
           <p>
             Sign in to build custom pizzas,
@@ -59,7 +84,6 @@ function Auth() {
         </div>
 
       </div>
-
 
       {/* RIGHT */}
       <div className="auth-right">
@@ -71,7 +95,6 @@ function Auth() {
         <p className="auth-subtext">
           Sign in or create an account to continue.
         </p>
-
 
         <div className="auth-toggle">
 
@@ -90,7 +113,6 @@ function Auth() {
           </button>
 
         </div>
-
 
         {!isLogin && (
           <input

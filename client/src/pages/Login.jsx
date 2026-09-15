@@ -18,10 +18,13 @@ function Login() {
         }
       );
 
-      // Store token
+      // Store JWT token
       localStorage.setItem("token", res.data.token);
 
-      // Store user info
+      // Store actual MongoDB user ID
+      localStorage.setItem("userId", res.data.user.id);
+
+      // Store user information
       localStorage.setItem(
         "user",
         JSON.stringify(res.data.user)
@@ -29,7 +32,7 @@ function Login() {
 
       alert("Login successful ✅");
 
-      // Redirect to menu page
+      // Redirect to menu
       navigate("/menu");
 
     } catch (error) {
