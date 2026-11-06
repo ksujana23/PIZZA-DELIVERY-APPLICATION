@@ -17,6 +17,8 @@ import tandoorichicken from "../assets/tandoorichicken.png";
 
 import "./MysteryPizza.css";
 
+const API_URL = "https://pizza-backend-j05r.onrender.com";
+
 function MysteryPizza() {
   const navigate = useNavigate();
 
@@ -27,10 +29,7 @@ function MysteryPizza() {
   const [showPayment, setShowPayment] = useState(false);
   const [processing, setProcessing] = useState(false);
 
-  // ===============================
   // PIZZA LIST
-  // ===============================
-
   const pizzas = [
     {
       name: "Classic Margherita",
@@ -94,11 +93,10 @@ function MysteryPizza() {
     },
   ];
 
-  // ===============================
   // REVEAL MYSTERY PIZZA
-  // ===============================
-
   const revealPizza = () => {
+    if (revealing || processing) return;
+
     setRevealing(true);
     setMysteryPizza(null);
 
@@ -120,16 +118,13 @@ function MysteryPizza() {
     }, 1200);
   };
 
-  // ===============================
   // ORDER MYSTERY PIZZA
-  // ===============================
-
   const orderMysteryPizza = () => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
 
     if (!token || !userId) {
-      alert("Please login first");
+      alert("Please login first.");
       navigate("/auth");
       return;
     }
@@ -142,100 +137,77 @@ function MysteryPizza() {
     setShowPayment(true);
   };
 
-  // ===============================
   // PAYMENT AND SAVE ORDER
-  // ===============================
-
   const handlePayment = async () => {
-    if (processing) return;
+    if (processing || !mysteryPizza) return;
+
+    const userId = localStorage.getItem("userId");
+    const token = localStorage.getItem("token");
+
+    if (!userId || !token) {
+      alert("Please login again to place your order.");
+      navigate("/auth");
+      return;
+    }
 
     setProcessing(true);
 
     try {
-      const userId = localStorage.getItem("userId");
+      const orderDetails = {
+        userId,
+        pizzaName: mysteryPizza.name,
+        quantity: 1,
+        totalPrice: mysteryPizza.price,
+        ingredients: [],
+        customDetails: {
+          type: "Mystery Pizza",
+          description: mysteryPizza.desc,
+        },
+      };
 
-      if (!userId) {
-        alert("User information not found. Please login again.");
-        setProcessing(false);
-        setShowPayment(false);
-        navigate("/auth");
-        return;
-      }
-
-      if (!mysteryPizza) {
-        alert("Please reveal your Mystery Pizza first.");
-        setProcessing(false);
-        return;
-      }
-
-      // Send Mystery Pizza order to backend
       const response = await fetch(
-        "http://localhost:5000/api/orders/place",
+        `${API_URL}/api/orders/place`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            userId: userId,
-            pizzaName: mysteryPizza.name,
-            quantity: 1,
-            totalPrice: mysteryPizza.price,
-            ingredients: [],
-            customDetails: {
-              type: "Mystery Pizza",
-              description: mysteryPizza.desc,
-            },
-          }),
+          body: JSON.stringify(orderDetails),
         }
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        alert(
-          data.message || "Failed to place Mystery Pizza order"
+        throw new Error(
+          data.message ||
+          data.error ||
+          "Failed to place Mystery Pizza order."
         );
-
-        setProcessing(false);
-        return;
       }
 
-      // Order successfully saved in MongoDB
-      console.log(
-        "Mystery Pizza order saved:",
-        data
-      );
+      console.log("Mystery Pizza order saved:", data);
 
-      // Clear previous temporary order data
       localStorage.removeItem("customOrder");
       localStorage.removeItem("currentOrder");
 
-      setProcessing(false);
       setShowPayment(false);
 
       alert("Mystery Pizza order placed successfully! 🍕");
 
-      // Navigate to My Orders
       navigate("/orders");
-
     } catch (error) {
-      console.error(
-        "Mystery Pizza order error:",
-        error
-      );
+      console.error("Mystery Pizza order error:", error);
 
       alert(
-        "Something went wrong while placing your order. Please try again."
+        error.message ||
+        "Something went wrong while placing your order."
       );
-
+    } finally {
       setProcessing(false);
     }
   };
-
-  // ===============================
-  // UI
-  // ===============================
 
   return (
     <>
@@ -245,9 +217,7 @@ function MysteryPizza() {
         <div className="mystery-container">
 
           {/* HEADING */}
-
           <div className="mystery-heading">
-
             <div className="gift-icon">🎁</div>
 
             <h1>Mystery Pizza</h1>
@@ -255,17 +225,12 @@ function MysteryPizza() {
             <p>
               Can't decide what to order? Let fate choose your next pizza.
             </p>
-
           </div>
 
           {/* START */}
-
           {!mysteryPizza && !revealing && (
             <div className="mystery-start-card">
-
-              <div className="mystery-pizza-icon">
-                🍕
-              </div>
+              <div className="mystery-pizza-icon">🍕</div>
 
               <h2>Feeling adventurous?</h2>
 
@@ -280,67 +245,45 @@ function MysteryPizza() {
               >
                 ✨ Reveal My Mystery Pizza
               </button>
-
             </div>
           )}
 
           {/* REVEALING */}
-
           {revealing && (
             <div className="revealing-card">
+              <div className="mystery-loader">🎁</div>
 
-              <div className="mystery-loader">
-                🎁
-              </div>
+              <h2>Choosing your mystery pizza...</h2>
 
-              <h2>
-                Choosing your mystery pizza...
-              </h2>
-
-              <p>
-                Something delicious is coming!
-              </p>
-
+              <p>Something delicious is coming!</p>
             </div>
           )}
 
           {/* RESULT */}
-
           {mysteryPizza && !revealing && (
             <div className="mystery-result">
-
               <div className="surprise-title">
                 ✨ SURPRISE! ✨
               </div>
 
               <div className="mystery-result-card">
-
                 <div className="mystery-image">
-
                   <img
                     src={mysteryPizza.image}
                     alt={mysteryPizza.name}
                   />
-
                 </div>
 
                 <div className="mystery-details">
-
                   <span className="mystery-badge">
                     🎁 Your Mystery Pick
                   </span>
 
-                  <h2>
-                    {mysteryPizza.name}
-                  </h2>
+                  <h2>{mysteryPizza.name}</h2>
 
-                  <h3>
-                    ₹{mysteryPizza.price}
-                  </h3>
+                  <h3>₹{mysteryPizza.price}</h3>
 
-                  <p>
-                    {mysteryPizza.desc}
-                  </p>
+                  <p>{mysteryPizza.desc}</p>
 
                   <button
                     className="mystery-order-button"
@@ -355,33 +298,22 @@ function MysteryPizza() {
                   >
                     🎲 Surprise Me Again
                   </button>
-
                 </div>
-
               </div>
-
             </div>
           )}
-
         </div>
       </section>
 
       {/* PAYMENT POPUP */}
-
       {showPayment && (
         <div className="payment-overlay">
-
           <div className="payment-box">
-
             <h2>Secure Checkout</h2>
 
-            <p>
-              {mysteryPizza?.name}
-            </p>
+            <p>{mysteryPizza?.name}</p>
 
-            <p>
-              Total ₹{mysteryPizza?.price}
-            </p>
+            <p>Total ₹{mysteryPizza?.price}</p>
 
             <input
               type="text"
@@ -389,7 +321,6 @@ function MysteryPizza() {
             />
 
             <div className="payment-row">
-
               <input
                 type="text"
                 placeholder="12/30"
@@ -399,7 +330,6 @@ function MysteryPizza() {
                 type="text"
                 placeholder="123"
               />
-
             </div>
 
             <button
@@ -417,12 +347,9 @@ function MysteryPizza() {
             >
               Cancel
             </button>
-
           </div>
-
         </div>
       )}
-
     </>
   );
 }

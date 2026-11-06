@@ -1,107 +1,95 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, useCallback } from "react";
 import Navbar from "../components/Navbar";
 import "./Orders.css";
+
+const API_URL = "https://pizza-backend-j05r.onrender.com";
 
 function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // =====================================================
-  // FETCH ORDERS
-  // =====================================================
-
-  const fetchOrders = async () => {
+  // Fetch orders from Render
+  const fetchOrders = useCallback(async () => {
     try {
-      // Get the actual MongoDB user ID
       const userId = localStorage.getItem("userId");
+      const token = localStorage.getItem("token");
 
-      if (!userId) {
-        console.error("User ID not found");
+      if (!userId || !token) {
+        setOrders([]);
+        setError("Please login to view your orders.");
         setLoading(false);
         return;
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/orders?userId=${encodeURIComponent(
-          userId
-        )}`
+        `${API_URL}/api/orders?userId=${encodeURIComponent(userId)}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       const data = await response.json();
 
-      if (response.ok) {
-        setOrders(data);
-      } else {
-        console.error("Failed to fetch orders");
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to fetch your orders."
+        );
       }
-    } catch (error) {
-      console.error("Error fetching orders:", error);
+
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid orders response from server.");
+      }
+
+      setOrders(data);
+      setError("");
+    } catch (err) {
+      console.error("Error fetching orders:", err);
+      setError(err.message || "Unable to load orders.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // =====================================================
-  // INITIAL FETCH + CHECK FOR DELIVERY UPDATES
-  // =====================================================
-
+  // Initial fetch and automatic refresh
   useEffect(() => {
     fetchOrders();
 
-    // Check for admin delivery updates every 5 seconds
     const interval = setInterval(() => {
       fetchOrders();
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchOrders]);
 
-  // =====================================================
-  // REMOVE DELIVERED ORDERS AFTER 3 MINUTES
-  // =====================================================
-
+  // Remove delivered orders after 3 minutes
   useEffect(() => {
     const timers = [];
 
     orders.forEach((order) => {
-      // Only handle delivered orders
-      if (
-        order.status === "Delivered" &&
-        order.deliveredAt
-      ) {
+      if (order.status === "Delivered" && order.deliveredAt) {
         const deliveredTime = new Date(
           order.deliveredAt
         ).getTime();
 
-        const currentTime = Date.now();
-
-        // 3 minutes = 180000 milliseconds
         const threeMinutes = 3 * 60 * 1000;
-
-        const timePassed =
-          currentTime - deliveredTime;
-
         const remainingTime =
-          threeMinutes - timePassed;
+          threeMinutes - (Date.now() - deliveredTime);
 
-        // If already more than 3 minutes old,
-        // remove immediately
         if (remainingTime <= 0) {
-          setOrders((prevOrders) =>
-            prevOrders.filter(
-              (item) => item._id !== order._id
-            )
+          setOrders((previous) =>
+            previous.filter((item) => item._id !== order._id)
           );
-
           return;
         }
 
-        // Otherwise schedule removal
         const timer = setTimeout(() => {
-          setOrders((prevOrders) =>
-            prevOrders.filter(
-              (item) => item._id !== order._id
-            )
+          setOrders((previous) =>
+            previous.filter((item) => item._id !== order._id)
           );
         }, remainingTime);
 
@@ -109,11 +97,8 @@ function Orders() {
       }
     });
 
-    // Cleanup timers
     return () => {
-      timers.forEach((timer) =>
-        clearTimeout(timer)
-      );
+      timers.forEach((timer) => clearTimeout(timer));
     };
   }, [orders]);
 
@@ -122,13 +107,8 @@ function Orders() {
       <Navbar />
 
       <div className="orders-page">
-
-        {/* HEADER */}
-
         <div className="orders-header">
-          <p className="orders-label">
-            ORDER HISTORY
-          </p>
+          <p className="orders-label">ORDER HISTORY</p>
 
           <h1>
             Your Pizza <span>Orders 🍕</span>
@@ -139,218 +119,155 @@ function Orders() {
           </p>
         </div>
 
-        {/* LOADING */}
-
         {loading && (
           <div className="orders-message">
-            <div className="message-icon">
-              🍕
-            </div>
-
-            <h2>
-              Loading your orders...
-            </h2>
+            <div className="message-icon">🍕</div>
+            <h2>Loading your orders...</h2>
           </div>
         )}
 
-        {/* NO ORDERS */}
-
-        {!loading && orders.length === 0 && (
+        {!loading && error && (
           <div className="orders-message">
-            <div className="message-icon">
-              🍕
-            </div>
+            <div className="message-icon">⚠️</div>
+            <h2>Couldn't load your orders</h2>
+            <p>{error}</p>
+            <button onClick={fetchOrders}>
+              Try again
+            </button>
+          </div>
+        )}
 
-            <h2>
-              No orders yet
-            </h2>
-
+        {!loading && !error && orders.length === 0 && (
+          <div className="orders-message">
+            <div className="message-icon">🍕</div>
+            <h2>No orders yet</h2>
             <p>
               Your delicious pizza journey starts here.
             </p>
           </div>
         )}
 
-        {/* ORDERS */}
-
-        {!loading && orders.length > 0 && (
+        {!loading && !error && orders.length > 0 && (
           <div className="orders-list">
-
             {orders.map((order, index) => (
-
-              <div
-                className="order-card"
-                key={order._id}
-              >
-
-                {/* TOP */}
-
+              <div className="order-card" key={order._id}>
                 <div className="order-card-top">
-
                   <div className="order-number">
                     ORDER #{orders.length - index}
                   </div>
 
                   <div
                     className={`order-status ${
-                      order.status?.toLowerCase() ===
-                      "pending"
+                      order.status?.toLowerCase() === "pending"
                         ? "pending"
                         : "completed"
                     }`}
                   >
                     ● {order.status}
                   </div>
-
                 </div>
 
-                {/* PIZZA NAME */}
-
                 <div className="pizza-order-title">
-
-                  <div className="pizza-icon">
-                    🍕
-                  </div>
+                  <div className="pizza-icon">🍕</div>
 
                   <div>
-
-                    <h2>
-                      {order.pizzaName}
-                    </h2>
+                    <h2>{order.pizzaName}</h2>
 
                     <p>
                       {order.quantity} pizza
-                      {order.quantity > 1
-                        ? "s"
-                        : ""}
+                      {order.quantity > 1 ? "s" : ""}
                     </p>
-
                   </div>
-
                 </div>
 
-                {/* BASIC DETAILS */}
-
                 <div className="order-info">
-
                   <div className="info-item">
-
-                    <span>
-                      Quantity
-                    </span>
-
-                    <strong>
-                      {order.quantity}
-                    </strong>
-
+                    <span>Quantity</span>
+                    <strong>{order.quantity}</strong>
                   </div>
 
                   <div className="info-item">
-
-                    <span>
-                      Ordered on
-                    </span>
-
+                    <span>Ordered on</span>
                     <strong>
-                      {new Date(
-                        order.createdAt
-                      ).toLocaleDateString()}
+                      {order.createdAt
+                        ? new Date(
+                            order.createdAt
+                          ).toLocaleDateString()
+                        : "N/A"}
                     </strong>
-
                   </div>
 
                   <div className="info-item total-item">
-
-                    <span>
-                      Total
-                    </span>
-
-                    <strong>
-                      ₹{order.totalPrice}
-                    </strong>
-
+                    <span>Total</span>
+                    <strong>₹{order.totalPrice}</strong>
                   </div>
-
                 </div>
 
-                {/* CUSTOM PIZZA */}
-
-                {order.pizzaName ===
-                  "Custom Pizza" &&
+                {order.pizzaName === "Custom Pizza" &&
                   order.customDetails && (
-
                     <div className="custom-details">
-
-                      <h3>
-                        ✨ Your Custom Pizza
-                      </h3>
+                      <h3>✨ Your Custom Pizza</h3>
 
                       <div className="custom-grid">
-
                         <div>
-
-                          <span>
-                            Base
-                          </span>
-
+                          <span>Base</span>
                           <strong>
-                            {order.customDetails.base}
+                            {order.customDetails.base || "N/A"}
                           </strong>
-
                         </div>
 
                         <div>
-
-                          <span>
-                            Sauce
-                          </span>
-
+                          <span>Sauce</span>
                           <strong>
-                            {order.customDetails.sauce}
+                            {order.customDetails.sauce || "N/A"}
                           </strong>
-
                         </div>
 
                         <div>
-
-                          <span>
-                            Cheese
-                          </span>
-
+                          <span>Cheese</span>
                           <strong>
-                            {order.customDetails.cheese}
+                            {order.customDetails.cheese || "N/A"}
                           </strong>
-
                         </div>
 
                         <div>
-
-                          <span>
-                            Veggies
-                          </span>
-
+                          <span>Veggies</span>
                           <strong>
                             {order.customDetails.veggies?.length > 0
-                              ? order.customDetails.veggies.join(
-                                  ", "
-                                )
+                              ? order.customDetails.veggies.join(", ")
                               : "None"}
                           </strong>
-
                         </div>
-
                       </div>
-
                     </div>
                   )}
 
+                {order.customDetails?.type ===
+                  "Recommended Pizza" && (
+                  <div className="custom-details">
+                    <h3>✨ Recommendation Details</h3>
+                    <p>
+                      Mood: {order.customDetails.mood || "N/A"}
+                    </p>
+                    <p>
+                      Match: {order.customDetails.matchScore ?? "N/A"}%
+                    </p>
+                  </div>
+                )}
+
+                {order.customDetails?.type ===
+                  "Mystery Pizza" && (
+                  <div className="custom-details">
+                    <h3>🎁 Mystery Pizza</h3>
+                    <p>
+                      {order.customDetails.description || ""}
+                    </p>
+                  </div>
+                )}
               </div>
-
             ))}
-
           </div>
         )}
-
       </div>
     </>
   );

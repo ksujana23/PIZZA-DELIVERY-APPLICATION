@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -13,6 +14,8 @@ import corncheese from "../assets/corncheese.png";
 import mexican from "../assets/mexican.png";
 import mushroom from "../assets/mushroom.png";
 import tandoorichicken from "../assets/tandoorichicken.png";
+
+const API_URL = "https://pizza-backend-j05r.onrender.com";
 
 function PizzaMenu() {
   const navigate = useNavigate();
@@ -36,64 +39,76 @@ function PizzaMenu() {
   };
 
   // After payment
-  const handlePayment = () => {
+  const handlePayment = async () => {
+    if (!selectedPizza || processing) return;
+
     setProcessing(true);
 
-    setTimeout(async () => {
-      try {
-        const userId = localStorage.getItem("userId");
+    try {
+      const userId = localStorage.getItem("userId");
+      const token = localStorage.getItem("token");
 
-        if (!userId) {
-          alert("User information not found. Please login again.");
-          setProcessing(false);
-          setShowPayment(false);
-          navigate("/auth");
-          return;
-        }
-
-        const response = await fetch(
-          "http://localhost:5000/api/orders/place",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              userId: userId,
-              pizzaName: selectedPizza.name,
-              quantity: 1,
-              totalPrice: selectedPizza.price,
-            }),
-          }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          alert(data.message || "Failed to place order");
-          setProcessing(false);
-          return;
-        }
-
-        console.log("Order saved to MongoDB:", data);
-
-        localStorage.removeItem("customOrder");
-
-        localStorage.setItem(
-          "currentOrder",
-          JSON.stringify(selectedPizza)
-        );
-
-        setProcessing(false);
+      if (!userId || !token) {
+        alert("User information not found. Please login again.");
         setShowPayment(false);
-
-        navigate("/orders");
-      } catch (error) {
-        console.error("Order error:", error);
-        alert("Something went wrong while placing the order");
-        setProcessing(false);
+        navigate("/auth");
+        return;
       }
-    }, 2000);
+
+      const response = await fetch(
+        `${API_URL}/api/orders/place`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            userId,
+            pizzaName: selectedPizza.name,
+            quantity: 1,
+            totalPrice: selectedPizza.price,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Order failed:", data);
+
+        alert(
+          data.message ||
+          data.error ||
+          `Failed to place order. Status: ${response.status}`
+        );
+
+        return;
+      }
+
+      console.log("Order saved to MongoDB:", data);
+
+      localStorage.removeItem("customOrder");
+
+      localStorage.setItem(
+        "currentOrder",
+        JSON.stringify(selectedPizza)
+      );
+
+      setShowPayment(false);
+
+      alert("Your order has been placed successfully!");
+
+      navigate("/orders");
+    } catch (error) {
+      console.error("Order error:", error);
+
+      alert(
+        "Unable to connect to the server. Please check your internet connection and try again."
+      );
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const pizzas = [
@@ -180,14 +195,8 @@ function PizzaMenu() {
 
         <div className="menu-grid">
           {pizzas.map((pizza, index) => (
-            <div
-              key={index}
-              className="menu-card"
-            >
-              <img
-                src={pizza.image}
-                alt={pizza.name}
-              />
+            <div key={index} className="menu-card">
+              <img src={pizza.image} alt={pizza.name} />
 
               <div className="menu-content">
                 <div className="menu-top-row">
@@ -217,13 +226,9 @@ function PizzaMenu() {
 
             <p>{selectedPizza?.name}</p>
 
-            <p>
-              Total ₹{selectedPizza?.price}
-            </p>
+            <p>Total ₹{selectedPizza?.price}</p>
 
-            <input
-              placeholder="4242 4242 4242 4242"
-            />
+            <input placeholder="4242 4242 4242 4242" />
 
             <div className="payment-row">
               <input placeholder="12/30" />

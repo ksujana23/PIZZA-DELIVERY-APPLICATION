@@ -30,8 +30,6 @@ function PizzaRecommendation() {
   const [showPayment, setShowPayment] = useState(false);
   const [processing, setProcessing] = useState(false);
 
-  // PIZZA LIST
-
   const pizzas = [
     {
       name: "Classic Margherita",
@@ -115,20 +113,20 @@ function PizzaRecommendation() {
     },
   ];
 
-  // BUDGET CHECK
-
+  // Budget check
   const fitsBudget = (pizza) => {
     if (budget === "low") return pizza.price < 500;
+
     if (budget === "medium") {
       return pizza.price >= 500 && pizza.price <= 800;
     }
+
     if (budget === "high") return pizza.price > 800;
 
     return false;
   };
 
-  // GET RECOMMENDATION
-
+  // Get recommendation
   const getRecommendation = () => {
     if (!mood || !budget || !hunger) {
       alert("Please select all your preferences first!");
@@ -168,8 +166,7 @@ function PizzaRecommendation() {
         }
       }
 
-      const popularityScore = pizza.popularity * 2;
-      score += popularityScore;
+      score += pizza.popularity * 2;
 
       if (pizza.popularity >= 5) {
         reasons.push("A popular choice among customers");
@@ -194,8 +191,7 @@ function PizzaRecommendation() {
     setRecommendation(scoredPizzas[0]);
   };
 
-  // ORDER RECOMMENDED PIZZA
-
+  // Order recommended pizza
   const orderRecommendedPizza = () => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
@@ -214,8 +210,7 @@ function PizzaRecommendation() {
     setShowPayment(true);
   };
 
-  // PAYMENT AND SAVE ORDER
-
+  // Place order
   const handlePayment = async () => {
     if (processing) return;
 
@@ -238,21 +233,21 @@ function PizzaRecommendation() {
 
     try {
       const orderDetails = {
-        userId: userId,
+        userId,
         pizzaName: recommendation.name,
         quantity: 1,
         totalPrice: recommendation.price,
         ingredients: [],
         customDetails: {
           type: "Recommended Pizza",
-          mood: mood,
-          budget: budget,
-          hunger: hunger,
+          mood,
+          budget,
+          hunger,
           matchScore: recommendation.matchScore,
         },
       };
 
-      console.log("Sending recommended pizza order:", orderDetails);
+      console.log("Sending recommended order:", orderDetails);
 
       const response = await fetch(
         `${API_URL}/api/orders/place`,
@@ -278,12 +273,18 @@ function PizzaRecommendation() {
         );
       }
 
+      if (!data.order) {
+        console.warn("Order response did not contain an order object.");
+      }
+
+      localStorage.removeItem("customOrder");
+      localStorage.removeItem("currentOrder");
+
       setShowPayment(false);
 
       alert("Your recommended pizza has been ordered successfully! 🍕");
 
       navigate("/orders");
-
     } catch (error) {
       console.error("Recommended pizza order error:", error);
 
@@ -291,13 +292,10 @@ function PizzaRecommendation() {
         error.message ||
         "Something went wrong while placing your order."
       );
-
     } finally {
       setProcessing(false);
     }
   };
-
-  // UI
 
   return (
     <>
@@ -314,7 +312,6 @@ function PizzaRecommendation() {
           </div>
 
           {/* CRAVING */}
-
           <div className="recommend-section">
             <h2>What are you craving?</h2>
             <p>Choose the flavour that matches your mood.</p>
@@ -322,28 +319,40 @@ function PizzaRecommendation() {
             <div className="options">
               <button
                 className={mood === "spicy" ? "option selected" : "option"}
-                onClick={() => setMood("spicy")}
+                onClick={() => {
+                  setMood("spicy");
+                  setRecommendation(null);
+                }}
               >
                 🌶️ <span>Spicy</span>
               </button>
 
               <button
                 className={mood === "cheesy" ? "option selected" : "option"}
-                onClick={() => setMood("cheesy")}
+                onClick={() => {
+                  setMood("cheesy");
+                  setRecommendation(null);
+                }}
               >
                 🧀 <span>Cheesy</span>
               </button>
 
               <button
                 className={mood === "veggie" ? "option selected" : "option"}
-                onClick={() => setMood("veggie")}
+                onClick={() => {
+                  setMood("veggie");
+                  setRecommendation(null);
+                }}
               >
                 🥬 <span>Veggie</span>
               </button>
 
               <button
                 className={mood === "meaty" ? "option selected" : "option"}
-                onClick={() => setMood("meaty")}
+                onClick={() => {
+                  setMood("meaty");
+                  setRecommendation(null);
+                }}
               >
                 🍗 <span>Meaty</span>
               </button>
@@ -351,7 +360,6 @@ function PizzaRecommendation() {
           </div>
 
           {/* BUDGET */}
-
           <div className="recommend-section">
             <h2>What's your budget?</h2>
             <p>Let us know how much you want to spend.</p>
@@ -359,21 +367,30 @@ function PizzaRecommendation() {
             <div className="budget-options">
               <button
                 className={budget === "low" ? "budget selected" : "budget"}
-                onClick={() => setBudget("low")}
+                onClick={() => {
+                  setBudget("low");
+                  setRecommendation(null);
+                }}
               >
                 💰 Under ₹500
               </button>
 
               <button
                 className={budget === "medium" ? "budget selected" : "budget"}
-                onClick={() => setBudget("medium")}
+                onClick={() => {
+                  setBudget("medium");
+                  setRecommendation(null);
+                }}
               >
                 💎 ₹500 - ₹800
               </button>
 
               <button
                 className={budget === "high" ? "budget selected" : "budget"}
-                onClick={() => setBudget("high")}
+                onClick={() => {
+                  setBudget("high");
+                  setRecommendation(null);
+                }}
               >
                 👑 ₹800+
               </button>
@@ -381,7 +398,6 @@ function PizzaRecommendation() {
           </div>
 
           {/* HUNGER */}
-
           <div className="recommend-section">
             <h2>How hungry are you? 🍽️</h2>
             <p>Tell us how filling you want your pizza to be.</p>
@@ -389,21 +405,30 @@ function PizzaRecommendation() {
             <div className="budget-options">
               <button
                 className={hunger === "light" ? "budget selected" : "budget"}
-                onClick={() => setHunger("light")}
+                onClick={() => {
+                  setHunger("light");
+                  setRecommendation(null);
+                }}
               >
                 🍃 Light
               </button>
 
               <button
                 className={hunger === "regular" ? "budget selected" : "budget"}
-                onClick={() => setHunger("regular")}
+                onClick={() => {
+                  setHunger("regular");
+                  setRecommendation(null);
+                }}
               >
                 🍕 Regular
               </button>
 
               <button
                 className={hunger === "heavy" ? "budget selected" : "budget"}
-                onClick={() => setHunger("heavy")}
+                onClick={() => {
+                  setHunger("heavy");
+                  setRecommendation(null);
+                }}
               >
                 🔥 Very Hungry
               </button>
@@ -411,7 +436,6 @@ function PizzaRecommendation() {
           </div>
 
           {/* FIND BUTTON */}
-
           <button
             className="find-button"
             onClick={getRecommendation}
@@ -420,10 +444,8 @@ function PizzaRecommendation() {
           </button>
 
           {/* RESULT */}
-
           {recommendation && (
             <div className="recommend-result">
-
               <div className="result-title">
                 <span>🎯</span>
 
@@ -436,7 +458,6 @@ function PizzaRecommendation() {
               </div>
 
               <div className="result-card">
-
                 <div className="result-image">
                   <img
                     src={recommendation.image}
@@ -445,7 +466,6 @@ function PizzaRecommendation() {
                 </div>
 
                 <div className="result-details">
-
                   <div className="result-name-row">
                     <h3>{recommendation.name}</h3>
 
@@ -494,7 +514,6 @@ function PizzaRecommendation() {
                   >
                     🛒 Order This Pizza
                   </button>
-
                 </div>
               </div>
             </div>
@@ -503,15 +522,12 @@ function PizzaRecommendation() {
       </section>
 
       {/* PAYMENT POPUP */}
-
       {showPayment && (
         <div className="payment-overlay">
           <div className="payment-box">
-
             <h2>Secure Checkout</h2>
 
             <p>{recommendation?.name}</p>
-
             <p>Total ₹{recommendation?.price}</p>
 
             <input
@@ -546,7 +562,6 @@ function PizzaRecommendation() {
             >
               Cancel
             </button>
-
           </div>
         </div>
       )}

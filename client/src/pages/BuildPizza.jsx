@@ -1,6 +1,9 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+
+const API_URL = "https://pizza-backend-j05r.onrender.com";
 
 function BuildPizza() {
   const [base, setBase] = useState(null);
@@ -11,10 +14,6 @@ function BuildPizza() {
   const [processing, setProcessing] = useState(false);
 
   const navigate = useNavigate();
-
-  // ===============================
-  // OPTIONS
-  // ===============================
 
   const baseOptions = [
     { name: "Cheese Burst", price: 180 },
@@ -50,30 +49,16 @@ function BuildPizza() {
     { name: "Tomatoes", price: 15 },
   ];
 
-  // ===============================
-  // VEGGIE TOGGLE
-  // ===============================
-
+  // Toggle veggies
   const toggleVeggie = (item) => {
-    const exists = veggies.find(
-      (veg) => veg.name === item.name
+    setVeggies((previous) =>
+      previous.some((veg) => veg.name === item.name)
+        ? previous.filter((veg) => veg.name !== item.name)
+        : [...previous, item]
     );
-
-    if (exists) {
-      setVeggies(
-        veggies.filter(
-          (veg) => veg.name !== item.name
-        )
-      );
-    } else {
-      setVeggies([...veggies, item]);
-    }
   };
 
-  // ===============================
-  // TOTAL
-  // ===============================
-
+  // Calculate total
   const veggieTotal = veggies.reduce(
     (sum, item) => sum + item.price,
     0
@@ -85,32 +70,22 @@ function BuildPizza() {
     (cheese?.price || 0) +
     veggieTotal;
 
-  // ===============================
-  // CREATE INGREDIENT LIST
-  // ===============================
-
+  // Create ingredient list
   const createIngredients = () => {
-    const ingredients = [];
+    const ingredients = [
+      { name: "Dough", quantity: 0.2 },
+      { name: "Cheese", quantity: 0.15 },
+    ];
 
-    ingredients.push({
-      name: "Dough",
-      quantity: 0.2,
-    });
-
-    ingredients.push({
-      name: "Cheese",
-      quantity: 0.15,
-    });
+    const sauceMap = {
+      "Classic Tomato": "Tomato Sauce",
+      BBQ: "BBQ Sauce",
+      "Alfredo White": "Alfredo Sauce",
+      "Pesto Basil": "Pesto Sauce",
+      "Spicy Arrabbiata": "Arrabbiata Sauce",
+    };
 
     if (sauce) {
-      const sauceMap = {
-        "Classic Tomato": "Tomato Sauce",
-        BBQ: "BBQ Sauce",
-        "Alfredo White": "Alfredo Sauce",
-        "Pesto Basil": "Pesto Sauce",
-        "Spicy Arrabbiata": "Arrabbiata Sauce",
-      };
-
       ingredients.push({
         name: sauceMap[sauce.name],
         quantity: 0.1,
@@ -145,348 +120,227 @@ function BuildPizza() {
     return ingredients;
   };
 
-  // ===============================
-  // PAYMENT
-  // ===============================
+  // Place custom pizza order
+  const handlePayment = async () => {
+    if (processing) return;
 
-  const handlePayment = () => {
+    const userId = localStorage.getItem("userId");
+    const token = localStorage.getItem("token");
+
+    if (!userId || !token) {
+      alert("Please login again to place your order.");
+      navigate("/auth");
+      return;
+    }
+
+    if (!base || !sauce || !cheese) {
+      alert("Please select a base, sauce and cheese.");
+      return;
+    }
+
     setProcessing(true);
 
-    setTimeout(async () => {
-      try {
-        const userId = localStorage.getItem("userId");
+    try {
+      const orderDetails = {
+        userId,
+        pizzaName: "Custom Pizza",
+        quantity: 1,
+        totalPrice: total,
+        ingredients: createIngredients(),
+        customDetails: {
+          type: "Custom Pizza",
+          base: base.name,
+          sauce: sauce.name,
+          cheese: cheese.name,
+          veggies: veggies.map((veg) => veg.name),
+        },
+      };
 
-        if (!userId) {
-          alert("User information not found. Please login again.");
-          setProcessing(false);
-          setShowPayment(false);
-          navigate("/auth");
-          return;
+      const response = await fetch(
+        `${API_URL}/api/orders/place`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(orderDetails),
         }
+      );
 
-        const ingredients = createIngredients();
+      const data = await response.json();
 
-        const response = await fetch(
-          "http://localhost:5000/api/orders/place",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              userId: userId,
-              pizzaName: "Custom Pizza",
-              quantity: 1,
-              totalPrice: total,
-              ingredients: ingredients,
-              customDetails: {
-                base: base?.name,
-                sauce: sauce?.name,
-                cheese: cheese?.name,
-                veggies: veggies.map(
-                  (veg) => veg.name
-                ),
-              },
-            }),
-          }
+      if (!response.ok) {
+        console.error("Custom order failed:", data);
+        throw new Error(
+          data.message || data.error || "Failed to place custom order."
         );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          alert(
-            data.message ||
-              "Failed to place order"
-          );
-
-          setProcessing(false);
-          return;
-        }
-
-        console.log(
-          "Custom order saved:",
-          data
-        );
-
-        localStorage.setItem(
-          "customOrder",
-          JSON.stringify({
-            name: "Custom Pizza 🍕",
-            price: total,
-            base: base?.name,
-            sauce: sauce?.name,
-            cheese: cheese?.name,
-            veggies: veggies.map(
-              (veg) => veg.name
-            ),
-          })
-        );
-
-        localStorage.removeItem(
-          "currentOrder"
-        );
-
-        setProcessing(false);
-        setShowPayment(false);
-
-        navigate("/orders");
-
-      } catch (error) {
-        console.error(
-          "Custom order error:",
-          error
-        );
-
-        alert(
-          "Something went wrong while placing the order"
-        );
-
-        setProcessing(false);
       }
-    }, 2000);
-  };
 
-  // ===============================
-  // UI
-  // ===============================
+      console.log("Custom order saved:", data);
+
+      localStorage.removeItem("currentOrder");
+      localStorage.removeItem("customOrder");
+
+      setShowPayment(false);
+
+      alert("Your custom pizza order has been placed successfully!");
+
+      navigate("/orders");
+    } catch (error) {
+      console.error("Custom pizza order error:", error);
+      alert(error.message || "Something went wrong while placing your order.");
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   return (
     <>
       <Navbar />
 
       <section className="build-page">
-
         {/* LEFT SIDE */}
-
         <div className="build-left">
-
           <h1>Build Your Pizza</h1>
 
           <p>
-            Follow the steps to craft your
-            perfect slice.
+            Follow the steps to craft your perfect slice.
           </p>
 
           {/* STEP 1 */}
-
           <div className="builder-section">
-
-            <h3>
-              🔴 1 Choose your Pizza Base
-            </h3>
+            <h3>🔴 1 Choose your Pizza Base</h3>
 
             <div className="option-grid">
-
               {baseOptions.map((item) => (
                 <div
                   key={item.name}
                   className={`option-card ${
-                    base?.name === item.name
-                      ? "selected"
-                      : ""
+                    base?.name === item.name ? "selected" : ""
                   }`}
-                  onClick={() =>
-                    setBase(item)
-                  }
+                  onClick={() => setBase(item)}
                 >
                   {item.name}
-
-                  <span>
-                    +₹{item.price}
-                  </span>
+                  <span>+₹{item.price}</span>
                 </div>
               ))}
-
             </div>
           </div>
 
           {/* STEP 2 */}
-
           <div className="builder-section">
-
-            <h3>
-              🔴 2 Pick a Sauce
-            </h3>
+            <h3>🔴 2 Pick a Sauce</h3>
 
             <div className="option-grid">
-
               {sauceOptions.map((item) => (
                 <div
                   key={item.name}
                   className={`option-card ${
-                    sauce?.name === item.name
-                      ? "selected"
-                      : ""
+                    sauce?.name === item.name ? "selected" : ""
                   }`}
-                  onClick={() =>
-                    setSauce(item)
-                  }
+                  onClick={() => setSauce(item)}
                 >
                   {item.name}
-
-                  <span>
-                    +₹{item.price}
-                  </span>
+                  <span>+₹{item.price}</span>
                 </div>
               ))}
-
             </div>
           </div>
 
           {/* STEP 3 */}
-
           <div className="builder-section">
-
-            <h3>
-              🔴 3 Select a Cheese
-            </h3>
+            <h3>🔴 3 Select a Cheese</h3>
 
             <div className="option-grid">
-
               {cheeseOptions.map((item) => (
                 <div
                   key={item.name}
                   className={`option-card ${
-                    cheese?.name === item.name
-                      ? "selected"
-                      : ""
+                    cheese?.name === item.name ? "selected" : ""
                   }`}
-                  onClick={() =>
-                    setCheese(item)
-                  }
+                  onClick={() => setCheese(item)}
                 >
                   {item.name}
-
-                  <span>
-                    +₹{item.price}
-                  </span>
+                  <span>+₹{item.price}</span>
                 </div>
               ))}
-
             </div>
           </div>
 
           {/* STEP 4 */}
-
           <div className="builder-section">
-
-            <h3>
-              🔴 4 Add Veggies (optional)
-            </h3>
+            <h3>🔴 4 Add Veggies (optional)</h3>
 
             <div className="veggie-grid">
-
               {veggieOptions.map((item) => (
                 <div
                   key={item.name}
                   className={`option-card ${
-                    veggies.find(
-                      (veg) =>
-                        veg.name === item.name
-                    )
+                    veggies.some((veg) => veg.name === item.name)
                       ? "selected"
                       : ""
                   }`}
-                  onClick={() =>
-                    toggleVeggie(item)
-                  }
+                  onClick={() => toggleVeggie(item)}
                 >
                   {item.name}
-
-                  <span>
-                    +₹{item.price}
-                  </span>
+                  <span>+₹{item.price}</span>
                 </div>
               ))}
-
             </div>
           </div>
-
         </div>
 
         {/* RIGHT SIDE */}
-
         <div className="build-right">
-
           <h2>🍕 Your Pizza</h2>
 
-          <p>
-            Base:{" "}
-            {base?.name || "—"}
-          </p>
-
-          <p>
-            Sauce:{" "}
-            {sauce?.name || "—"}
-          </p>
-
-          <p>
-            Cheese:{" "}
-            {cheese?.name || "—"}
-          </p>
+          <p>Base: {base?.name || "—"}</p>
+          <p>Sauce: {sauce?.name || "—"}</p>
+          <p>Cheese: {cheese?.name || "—"}</p>
 
           <p>
             Veggies:{" "}
             {veggies.length > 0
-              ? veggies
-                  .map((veg) => veg.name)
-                  .join(", ")
+              ? veggies.map((veg) => veg.name).join(", ")
               : "None selected"}
           </p>
 
           <hr />
 
-          <h3>
-            Total ₹{total}
-          </h3>
+          <h3>Total ₹{total}</h3>
 
           <button
             onClick={() => {
-              const userId =
-                localStorage.getItem(
-                  "userId"
-                );
-
-              if (!userId) {
-                alert(
-                  "Please login first"
-                );
+              if (!localStorage.getItem("token")) {
+                alert("Please login first");
                 navigate("/auth");
+                return;
+              }
+
+              if (!base || !sauce || !cheese) {
+                alert("Please complete steps 1-3.");
                 return;
               }
 
               setShowPayment(true);
             }}
-            disabled={
-              !(base && sauce && cheese)
-            }
+            disabled={!(base && sauce && cheese)}
           >
             {base && sauce && cheese
               ? "Checkout"
               : "Complete steps 1-3"}
           </button>
-
         </div>
 
-        {/* PAYMENT */}
-
+        {/* PAYMENT POPUP */}
         {showPayment && (
-
           <div className="payment-overlay">
-
             <div className="payment-box">
+              <h2>Secure Checkout</h2>
 
-              <h2>
-                Secure Checkout
-              </h2>
-
-              <p>
-                Custom Pizza
-              </p>
-
-              <p>
-                Total ₹{total}
-              </p>
+              <p>Custom Pizza</p>
+              <p>Total ₹{total}</p>
 
               <input
                 type="text"
@@ -514,20 +368,14 @@ function BuildPizza() {
 
               <button
                 className="close-btn"
-                onClick={() =>
-                  setShowPayment(false)
-                }
+                onClick={() => setShowPayment(false)}
                 disabled={processing}
               >
                 Cancel
               </button>
-
             </div>
-
           </div>
-
         )}
-
       </section>
     </>
   );
