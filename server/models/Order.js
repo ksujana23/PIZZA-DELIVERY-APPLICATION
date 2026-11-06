@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
@@ -28,29 +29,15 @@ const orderSchema = new mongoose.Schema(
       default: "Pending",
     },
 
-    // Stores the exact time when admin marks the order as delivered
     deliveredAt: {
       type: Date,
       default: null,
     },
 
+    // Supports custom pizza and recommendation details
     customDetails: {
-      base: {
-        type: String,
-      },
-
-      sauce: {
-        type: String,
-      },
-
-      cheese: {
-        type: String,
-      },
-
-      veggies: {
-        type: [String],
-        default: [],
-      },
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
     },
 
     ingredients: [
@@ -58,7 +45,6 @@ const orderSchema = new mongoose.Schema(
         name: {
           type: String,
         },
-
         quantity: {
           type: Number,
         },
