@@ -6,7 +6,7 @@ This project was developed as a **Level 3 Full Stack Web Development Project** i
 
 ## Project Link
 
-https://pizza-delivery-application-three.vercel.app?utm_source=chatgpt.com
+https://pizza-delivery-application-three.vercel.app
 
 ---
 
