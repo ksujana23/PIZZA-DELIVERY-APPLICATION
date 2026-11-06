@@ -1,0 +1,152 @@
+.admin-page {
+  min-height: 100vh;
+  background: #f2f4ef;
+  padding: 60px 8%;
+  color: #18313d;
+}
+
+.admin-header {
+  margin-bottom: 40px;
+}
+
+.admin-label {
+  font-size: 12px;
+  letter-spacing: 2px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.admin-header h1 {
+  font-size: 48px;
+  margin: 0 0 10px;
+}
+
+.admin-header p {
+  color: #60727a;
+}
+
+.admin-orders-list {
+  max-width: 850px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-order-card {
+  background: white;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 8px 25px rgba(24, 49, 61, 0.08);
+}
+
+.admin-order-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.admin-order-id {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #71818a;
+}
+
+.admin-order-card h2 {
+  margin: 8px 0 0;
+  font-size: 25px;
+}
+
+.admin-status {
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-status.pending {
+  background: #fff1d6;
+  color: #c47700;
+}
+
+.admin-status.delivered {
+  background: #e1f5e8;
+  color: #23834a;
+}
+
+.admin-order-details {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  background: #f7f8f6;
+  border-radius: 12px;
+  padding: 18px;
+  margin: 25px 0;
+}
+
+.admin-order-details div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-order-details span {
+  font-size: 11px;
+  color: #71818a;
+}
+
+.admin-order-details strong {
+  font-size: 15px;
+}
+
+.deliver-btn {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  background: #ef4444;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.deliver-btn:hover {
+  opacity: 0.9;
+}
+
+.delivered-message {
+  padding: 13px;
+  border-radius: 10px;
+  background: #e8f7ed;
+  color: #23834a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-message {
+  background: white;
+  padding: 40px;
+  border-radius: 18px;
+  max-width: 850px;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+
+  .admin-page {
+    padding: 40px 20px;
+  }
+
+  .admin-header h1 {
+    font-size: 34px;
+  }
+
+  .admin-order-top {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .admin-order-details {
+    grid-template-columns: 1fr;
+  }
+}

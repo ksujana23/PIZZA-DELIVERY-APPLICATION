@@ -24,7 +24,14 @@ const orderSchema = new mongoose.Schema(
 
     status: {
       type: String,
+      enum: ["Pending", "Delivered"],
       default: "Pending",
+    },
+
+    // Stores the exact time when admin marks the order as delivered
+    deliveredAt: {
+      type: Date,
+      default: null,
     },
 
     customDetails: {

@@ -7,6 +7,7 @@ import BuildPizza from "./pages/BuildPizza";
 import Orders from "./pages/Orders";
 import PizzaRecommendation from "./pages/PizzaRecommendation";
 import MysteryPizza from "./pages/MysteryPizza";
+import AdminOrders from "./pages/AdminOrders";
 
 function App() {
   return (
@@ -22,8 +23,12 @@ function App() {
         <Route path="/build" element={<BuildPizza />} />
 
         <Route path="/orders" element={<Orders />} />
+
         <Route path="/recommend" element={<PizzaRecommendation />} />
+
         <Route path="/mystery" element={<MysteryPizza />} />
+
+        <Route path="/admin" element={<AdminOrders />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,7 +1,7 @@
+
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
 
 // ================= REGISTER =================
 
@@ -9,8 +9,19 @@ const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message: "Please provide name, email and password"
+      });
+    }
+
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check if email already exists
+    const existingUser = await User.findOne({
+      email: cleanEmail
+    });
 
     if (existingUser) {
       return res.status(400).json({
@@ -19,18 +30,20 @@ const registerUser = async (req, res) => {
     }
 
     // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
     const user = await User.create({
-      name,
-      email,
+      name: cleanName,
+      email: cleanEmail,
       password: hashedPassword
     });
 
-    // Success response
-    res.status(201).json({
+    console.log("Registration successful:", user._id);
+    console.log("Database:", User.db.name);
+    console.log("Collection:", User.collection.name);
+
+    return res.status(201).json({
       message: "User registered successfully",
       user: {
         id: user._id,
@@ -40,29 +53,65 @@ const registerUser = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({
-      message: error.message
+    console.error("Registration error:", error);
+
+    return res.status(500).json({
+      message: "Registration failed",
+      error: error.message
     });
   }
 };
-
 
 // ================= LOGIN =================
 
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { name, password } = req.body;
 
-    // Find user
-    const user = await User.findOne({ email });
-
-    if (!user) {
+    if (!name || !password) {
       return res.status(400).json({
-        message: "User not found"
+        message: "Please enter your name/email and password"
       });
     }
 
-    // Compare password
+    const loginValue = name.trim();
+
+    console.log("========== LOGIN DEBUG ==========");
+    console.log("Received login value:", loginValue);
+    console.log("Database:", User.db.name);
+    console.log("Collection:", User.collection.name);
+
+    // Find user by name OR email
+    const user = await User.findOne({
+      $or: [
+        {
+          name: {
+            $regex: new RegExp(
+              "^" + loginValue.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$",
+              "i"
+            )
+          }
+        },
+        {
+          email: loginValue.toLowerCase()
+        }
+      ]
+    });
+
+    console.log(
+      "User search result:",
+      user ? user._id.toString() : "NOT FOUND"
+    );
+
+    console.log("================================");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found. Check your registered name or email."
+      });
+    }
+
+    // Check password
     const isMatch = await bcrypt.compare(
       password,
       user.password
@@ -70,11 +119,15 @@ const loginUser = async (req, res) => {
 
     if (!isMatch) {
       return res.status(400).json({
-        message: "Invalid credentials"
+        message: "Incorrect password"
       });
     }
 
-    // Create token
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is missing");
+    }
+
+    // Generate token
     const token = jwt.sign(
       {
         id: user._id,
@@ -86,8 +139,9 @@ const loginUser = async (req, res) => {
       }
     );
 
-    // Success response
-    res.status(200).json({
+    console.log("LOGIN SUCCESS:", user._id.toString());
+
+    return res.status(200).json({
       message: "Login successful",
       token,
       user: {
@@ -99,14 +153,16 @@ const loginUser = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({
-      message: error.message
+    console.error("Login error:", error);
+
+    return res.status(500).json({
+      message: "Login failed",
+      error: error.message
     });
   }
 };
 
-
-// Export
+// ================= EXPORT =================
 
 module.exports = {
   registerUser,

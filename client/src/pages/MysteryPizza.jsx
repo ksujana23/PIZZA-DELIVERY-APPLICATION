@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -25,6 +26,10 @@ function MysteryPizza() {
 
   const [showPayment, setShowPayment] = useState(false);
   const [processing, setProcessing] = useState(false);
+
+  // ===============================
+  // PIZZA LIST
+  // ===============================
 
   const pizzas = [
     {
@@ -89,6 +94,10 @@ function MysteryPizza() {
     },
   ];
 
+  // ===============================
+  // REVEAL MYSTERY PIZZA
+  // ===============================
+
   const revealPizza = () => {
     setRevealing(true);
     setMysteryPizza(null);
@@ -97,7 +106,9 @@ function MysteryPizza() {
       let randomIndex;
 
       do {
-        randomIndex = Math.floor(Math.random() * pizzas.length);
+        randomIndex = Math.floor(
+          Math.random() * pizzas.length
+        );
       } while (
         pizzas.length > 1 &&
         randomIndex === lastPizzaIndex
@@ -109,42 +120,122 @@ function MysteryPizza() {
     }, 1200);
   };
 
-  // Open checkout
+  // ===============================
+  // ORDER MYSTERY PIZZA
+  // ===============================
+
   const orderMysteryPizza = () => {
     const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
 
-    if (!token) {
+    if (!token || !userId) {
       alert("Please login first");
       navigate("/auth");
+      return;
+    }
+
+    if (!mysteryPizza) {
+      alert("Please reveal your Mystery Pizza first.");
       return;
     }
 
     setShowPayment(true);
   };
 
-  // Complete payment
-  const handlePayment = () => {
+  // ===============================
+  // PAYMENT AND SAVE ORDER
+  // ===============================
+
+  const handlePayment = async () => {
+    if (processing) return;
+
     setProcessing(true);
 
-    setTimeout(() => {
-      localStorage.removeItem("customOrder");
+    try {
+      const userId = localStorage.getItem("userId");
 
-      localStorage.setItem(
-        "currentOrder",
-        JSON.stringify(mysteryPizza)
+      if (!userId) {
+        alert("User information not found. Please login again.");
+        setProcessing(false);
+        setShowPayment(false);
+        navigate("/auth");
+        return;
+      }
+
+      if (!mysteryPizza) {
+        alert("Please reveal your Mystery Pizza first.");
+        setProcessing(false);
+        return;
+      }
+
+      // Send Mystery Pizza order to backend
+      const response = await fetch(
+        "http://localhost:5000/api/orders/place",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: userId,
+            pizzaName: mysteryPizza.name,
+            quantity: 1,
+            totalPrice: mysteryPizza.price,
+            ingredients: [],
+            customDetails: {
+              type: "Mystery Pizza",
+              description: mysteryPizza.desc,
+            },
+          }),
+        }
       );
 
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(
+          data.message || "Failed to place Mystery Pizza order"
+        );
+
+        setProcessing(false);
+        return;
+      }
+
+      // Order successfully saved in MongoDB
       console.log(
-        "Mystery order saved:",
-        localStorage.getItem("currentOrder")
+        "Mystery Pizza order saved:",
+        data
       );
+
+      // Clear previous temporary order data
+      localStorage.removeItem("customOrder");
+      localStorage.removeItem("currentOrder");
 
       setProcessing(false);
       setShowPayment(false);
 
+      alert("Mystery Pizza order placed successfully! 🍕");
+
+      // Navigate to My Orders
       navigate("/orders");
-    }, 2000);
+
+    } catch (error) {
+      console.error(
+        "Mystery Pizza order error:",
+        error
+      );
+
+      alert(
+        "Something went wrong while placing your order. Please try again."
+      );
+
+      setProcessing(false);
+    }
   };
+
+  // ===============================
+  // UI
+  // ===============================
 
   return (
     <>
@@ -154,7 +245,9 @@ function MysteryPizza() {
         <div className="mystery-container">
 
           {/* HEADING */}
+
           <div className="mystery-heading">
+
             <div className="gift-icon">🎁</div>
 
             <h1>Mystery Pizza</h1>
@@ -162,9 +255,11 @@ function MysteryPizza() {
             <p>
               Can't decide what to order? Let fate choose your next pizza.
             </p>
+
           </div>
 
           {/* START */}
+
           {!mysteryPizza && !revealing && (
             <div className="mystery-start-card">
 
@@ -190,6 +285,7 @@ function MysteryPizza() {
           )}
 
           {/* REVEALING */}
+
           {revealing && (
             <div className="revealing-card">
 
@@ -209,6 +305,7 @@ function MysteryPizza() {
           )}
 
           {/* RESULT */}
+
           {mysteryPizza && !revealing && (
             <div className="mystery-result">
 
@@ -219,10 +316,12 @@ function MysteryPizza() {
               <div className="mystery-result-card">
 
                 <div className="mystery-image">
+
                   <img
                     src={mysteryPizza.image}
                     alt={mysteryPizza.name}
                   />
+
                 </div>
 
                 <div className="mystery-details">
@@ -268,6 +367,7 @@ function MysteryPizza() {
       </section>
 
       {/* PAYMENT POPUP */}
+
       {showPayment && (
         <div className="payment-overlay">
 
@@ -284,22 +384,28 @@ function MysteryPizza() {
             </p>
 
             <input
+              type="text"
               placeholder="4242 4242 4242 4242"
             />
 
             <div className="payment-row">
 
               <input
+                type="text"
                 placeholder="12/30"
               />
 
               <input
+                type="text"
                 placeholder="123"
               />
 
             </div>
 
-            <button onClick={handlePayment}>
+            <button
+              onClick={handlePayment}
+              disabled={processing}
+            >
               {processing
                 ? "Processing payment..."
                 : `Pay ₹${mysteryPizza?.price}`}
@@ -307,6 +413,7 @@ function MysteryPizza() {
 
             <button
               onClick={() => setShowPayment(false)}
+              disabled={processing}
             >
               Cancel
             </button>

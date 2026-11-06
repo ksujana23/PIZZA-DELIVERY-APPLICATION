@@ -1,34 +1,77 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-const protect = (req, res, next) => {
-  let token;
+// ==========================================
+// VERIFY LOGIN
+// ==========================================
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    try {
-      // Get token
-      token = req.headers.authorization.split(" ")[1];
+const protect = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
 
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      req.user = decoded;
-
-      next();
-    } catch (error) {
+    if (
+      !authHeader ||
+      !authHeader.startsWith("Bearer ")
+    ) {
       return res.status(401).json({
-        message: "Not authorized",
+        message: "Not authorized. Please login.",
       });
     }
-  }
 
-  if (!token) {
+    const token = authHeader.split(" ")[1];
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
+
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        message: "User not found.",
+      });
+    }
+
+    req.user = user;
+
+    next();
+
+  } catch (error) {
+    console.error("Authentication error:", error);
+
     return res.status(401).json({
-      message: "No token found",
+      message: "Invalid or expired token.",
     });
   }
 };
 
-module.exports = protect;
+// ==========================================
+// ADMIN ONLY
+// ==========================================
+
+const adminOnly = (req, res, next) => {
+
+  if (!req.user) {
+    return res.status(401).json({
+      message: "Not authorized.",
+    });
+  }
+
+  if (req.user.role !== "admin") {
+    return res.status(403).json({
+      message: "Admin access required.",
+    });
+  }
+
+  next();
+};
+
+// ==========================================
+// EXPORT
+// ==========================================
+
+module.exports = {
+  protect,
+  adminOnly,
+};

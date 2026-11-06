@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -24,6 +25,13 @@ function PizzaRecommendation() {
   const [budget, setBudget] = useState("");
   const [hunger, setHunger] = useState("");
   const [recommendation, setRecommendation] = useState(null);
+
+  const [showPayment, setShowPayment] = useState(false);
+  const [processing, setProcessing] = useState(false);
+
+  // ===============================
+  // PIZZA LIST
+  // ===============================
 
   const pizzas = [
     {
@@ -108,7 +116,10 @@ function PizzaRecommendation() {
     },
   ];
 
-  // Check whether pizza fits selected budget
+  // ===============================
+  // BUDGET CHECK
+  // ===============================
+
   const fitsBudget = (pizza) => {
     if (budget === "low") {
       return pizza.price < 500;
@@ -125,6 +136,10 @@ function PizzaRecommendation() {
     return false;
   };
 
+  // ===============================
+  // GET RECOMMENDATION
+  // ===============================
+
   const getRecommendation = () => {
     if (!mood || !budget || !hunger) {
       alert("Please select all your preferences first!");
@@ -135,13 +150,13 @@ function PizzaRecommendation() {
       let score = 0;
       const reasons = [];
 
-      // 1. TASTE MATCH - 50 points
+      // TASTE MATCH
       if (pizza.tags.includes(mood)) {
         score += 50;
         reasons.push(`Matches your ${mood} craving`);
       }
 
-      // 2. BUDGET MATCH - 30 points
+      // BUDGET MATCH
       if (fitsBudget(pizza)) {
         score += 30;
 
@@ -154,7 +169,7 @@ function PizzaRecommendation() {
         }
       }
 
-      // 3. HUNGER MATCH - 20 points
+      // HUNGER MATCH
       if (pizza.hunger === hunger) {
         score += 20;
 
@@ -167,7 +182,7 @@ function PizzaRecommendation() {
         }
       }
 
-      // Popularity is used as a tie-breaker
+      // POPULARITY
       const popularityScore = pizza.popularity * 2;
       score += popularityScore;
 
@@ -194,6 +209,122 @@ function PizzaRecommendation() {
     setRecommendation(scoredPizzas[0]);
   };
 
+  // ===============================
+  // ORDER RECOMMENDED PIZZA
+  // ===============================
+
+  const orderRecommendedPizza = () => {
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+
+    if (!token || !userId) {
+      alert("Please login first!");
+      navigate("/auth");
+      return;
+    }
+
+    if (!recommendation) {
+      alert("Please find a pizza recommendation first.");
+      return;
+    }
+
+    setShowPayment(true);
+  };
+
+  // ===============================
+  // PAYMENT AND SAVE ORDER
+  // ===============================
+
+  const handlePayment = async () => {
+    if (processing) return;
+
+    setProcessing(true);
+
+    try {
+      const userId = localStorage.getItem("userId");
+
+      if (!userId) {
+        alert("User information not found. Please login again.");
+        setProcessing(false);
+        setShowPayment(false);
+        navigate("/auth");
+        return;
+      }
+
+      if (!recommendation) {
+        alert("No recommended pizza selected.");
+        setProcessing(false);
+        return;
+      }
+
+      const response = await fetch(
+        "http://localhost:5000/api/orders/place",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: userId,
+            pizzaName: recommendation.name,
+            quantity: 1,
+            totalPrice: recommendation.price,
+            ingredients: [],
+            customDetails: {
+              type: "Recommended Pizza",
+              mood: mood,
+              budget: budget,
+              hunger: hunger,
+              matchScore: recommendation.matchScore,
+            },
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(
+          data.message || "Failed to place your order."
+        );
+
+        setProcessing(false);
+        return;
+      }
+
+      console.log(
+        "Recommended pizza order saved:",
+        data
+      );
+
+      localStorage.removeItem("customOrder");
+      localStorage.removeItem("currentOrder");
+
+      setProcessing(false);
+      setShowPayment(false);
+
+      alert("Your recommended pizza has been ordered successfully! 🍕");
+
+      navigate("/orders");
+
+    } catch (error) {
+      console.error(
+        "Recommended pizza order error:",
+        error
+      );
+
+      alert(
+        "Something went wrong while placing your order."
+      );
+
+      setProcessing(false);
+    }
+  };
+
+  // ===============================
+  // UI
+  // ===============================
+
   return (
     <>
       <Navbar />
@@ -203,6 +334,7 @@ function PizzaRecommendation() {
         <div className="recommend-container">
 
           {/* HEADING */}
+
           <div className="recommend-heading">
 
             <h1>
@@ -216,6 +348,7 @@ function PizzaRecommendation() {
           </div>
 
           {/* CRAVING */}
+
           <div className="recommend-section">
 
             <h2>
@@ -229,11 +362,7 @@ function PizzaRecommendation() {
             <div className="options">
 
               <button
-                className={
-                  mood === "spicy"
-                    ? "option selected"
-                    : "option"
-                }
+                className={mood === "spicy" ? "option selected" : "option"}
                 onClick={() => setMood("spicy")}
               >
                 🌶️
@@ -241,11 +370,7 @@ function PizzaRecommendation() {
               </button>
 
               <button
-                className={
-                  mood === "cheesy"
-                    ? "option selected"
-                    : "option"
-                }
+                className={mood === "cheesy" ? "option selected" : "option"}
                 onClick={() => setMood("cheesy")}
               >
                 🧀
@@ -253,11 +378,7 @@ function PizzaRecommendation() {
               </button>
 
               <button
-                className={
-                  mood === "veggie"
-                    ? "option selected"
-                    : "option"
-                }
+                className={mood === "veggie" ? "option selected" : "option"}
                 onClick={() => setMood("veggie")}
               >
                 🥬
@@ -265,11 +386,7 @@ function PizzaRecommendation() {
               </button>
 
               <button
-                className={
-                  mood === "meaty"
-                    ? "option selected"
-                    : "option"
-                }
+                className={mood === "meaty" ? "option selected" : "option"}
                 onClick={() => setMood("meaty")}
               >
                 🍗
@@ -281,6 +398,7 @@ function PizzaRecommendation() {
           </div>
 
           {/* BUDGET */}
+
           <div className="recommend-section">
 
             <h2>
@@ -294,33 +412,21 @@ function PizzaRecommendation() {
             <div className="budget-options">
 
               <button
-                className={
-                  budget === "low"
-                    ? "budget selected"
-                    : "budget"
-                }
+                className={budget === "low" ? "budget selected" : "budget"}
                 onClick={() => setBudget("low")}
               >
                 💰 Under ₹500
               </button>
 
               <button
-                className={
-                  budget === "medium"
-                    ? "budget selected"
-                    : "budget"
-                }
+                className={budget === "medium" ? "budget selected" : "budget"}
                 onClick={() => setBudget("medium")}
               >
                 💎 ₹500 - ₹800
               </button>
 
               <button
-                className={
-                  budget === "high"
-                    ? "budget selected"
-                    : "budget"
-                }
+                className={budget === "high" ? "budget selected" : "budget"}
                 onClick={() => setBudget("high")}
               >
                 👑 ₹800+
@@ -331,6 +437,7 @@ function PizzaRecommendation() {
           </div>
 
           {/* HUNGER */}
+
           <div className="recommend-section">
 
             <h2>
@@ -344,33 +451,21 @@ function PizzaRecommendation() {
             <div className="budget-options">
 
               <button
-                className={
-                  hunger === "light"
-                    ? "budget selected"
-                    : "budget"
-                }
+                className={hunger === "light" ? "budget selected" : "budget"}
                 onClick={() => setHunger("light")}
               >
                 🍃 Light
               </button>
 
               <button
-                className={
-                  hunger === "regular"
-                    ? "budget selected"
-                    : "budget"
-                }
+                className={hunger === "regular" ? "budget selected" : "budget"}
                 onClick={() => setHunger("regular")}
               >
                 🍕 Regular
               </button>
 
               <button
-                className={
-                  hunger === "heavy"
-                    ? "budget selected"
-                    : "budget"
-                }
+                className={hunger === "heavy" ? "budget selected" : "budget"}
                 onClick={() => setHunger("heavy")}
               >
                 🔥 Very Hungry
@@ -381,6 +476,7 @@ function PizzaRecommendation() {
           </div>
 
           {/* FIND BUTTON */}
+
           <button
             className="find-button"
             onClick={getRecommendation}
@@ -389,6 +485,7 @@ function PizzaRecommendation() {
           </button>
 
           {/* RESULT */}
+
           {recommendation && (
             <div className="recommend-result">
 
@@ -409,6 +506,7 @@ function PizzaRecommendation() {
               <div className="result-card">
 
                 {/* IMAGE */}
+
                 <div className="result-image">
 
                   <img
@@ -419,6 +517,7 @@ function PizzaRecommendation() {
                 </div>
 
                 {/* DETAILS */}
+
                 <div className="result-details">
 
                   <div className="result-name-row">
@@ -484,9 +583,9 @@ function PizzaRecommendation() {
 
                   <button
                     className="order-recommended"
-                    onClick={() => navigate("/menu")}
+                    onClick={orderRecommendedPizza}
                   >
-                    Order This Pizza →
+                    🛒 Order This Pizza
                   </button>
 
                 </div>
@@ -499,6 +598,64 @@ function PizzaRecommendation() {
         </div>
 
       </section>
+
+      {/* PAYMENT POPUP */}
+
+      {showPayment && (
+        <div className="payment-overlay">
+
+          <div className="payment-box">
+
+            <h2>Secure Checkout</h2>
+
+            <p>
+              {recommendation?.name}
+            </p>
+
+            <p>
+              Total ₹{recommendation?.price}
+            </p>
+
+            <input
+              type="text"
+              placeholder="4242 4242 4242 4242"
+            />
+
+            <div className="payment-row">
+
+              <input
+                type="text"
+                placeholder="12/30"
+              />
+
+              <input
+                type="text"
+                placeholder="123"
+              />
+
+            </div>
+
+            <button
+              onClick={handlePayment}
+              disabled={processing}
+            >
+              {processing
+                ? "Processing payment..."
+                : `Pay ₹${recommendation?.price}`}
+            </button>
+
+            <button
+              onClick={() => setShowPayment(false)}
+              disabled={processing}
+            >
+              Cancel
+            </button>
+
+          </div>
+
+        </div>
+      )}
+
     </>
   );
 }

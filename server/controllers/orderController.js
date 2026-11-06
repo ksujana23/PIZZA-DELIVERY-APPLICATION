@@ -105,23 +105,24 @@ const placeOrder = async (req, res) => {
       });
     }
 
-    // =================================================
     // CREATE ORDER
-    // =================================================
-
     const order = await Order.create({
       userId,
       pizzaName,
       quantity,
       totalPrice,
 
+      // Custom pizza details
       customDetails:
         pizzaName === "Custom Pizza"
           ? customDetails
           : undefined,
 
-      ingredients:
-        ingredients || [],
+      // Ingredients
+      ingredients: ingredients || [],
+
+      // New orders start as Pending
+      status: "Pending",
     });
 
     // SUCCESS
@@ -140,14 +141,13 @@ const placeOrder = async (req, res) => {
 };
 
 // =====================================================
-// GET ORDERS FOR CURRENT USER
+// GET PENDING ORDERS FOR CURRENT USER
 // =====================================================
 
 const getOrders = async (req, res) => {
   try {
     const { userId } = req.query;
 
-    // Check userId
     if (!userId) {
       return res.status(400).json({
         message: "User ID is required",
@@ -155,9 +155,11 @@ const getOrders = async (req, res) => {
     }
 
     // IMPORTANT:
-    // Only return orders belonging to this user
+    // Customer only sees Pending orders.
+    // Delivered orders will disappear automatically.
     const orders = await Order.find({
       userId: userId,
+      status: "Pending",
     }).sort({
       createdAt: -1,
     });
@@ -174,10 +176,72 @@ const getOrders = async (req, res) => {
 };
 
 // =====================================================
+// ADMIN - GET ALL ORDERS
+// =====================================================
+
+const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({})
+      .sort({
+        createdAt: -1,
+      });
+
+    res.status(200).json(orders);
+
+  } catch (error) {
+    console.error("Get all orders error:", error);
+
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// =====================================================
+// ADMIN - MARK ORDER AS DELIVERED
+// =====================================================
+
+const markAsDelivered = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const order = await Order.findByIdAndUpdate(
+      orderId,
+      {
+        status: "Delivered",
+      },
+      {
+        new: true,
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Order marked as delivered",
+      order,
+    });
+
+  } catch (error) {
+    console.error("Mark delivered error:", error);
+
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// =====================================================
 // EXPORT
 // =====================================================
 
 module.exports = {
   placeOrder,
   getOrders,
+  getAllOrders,
+  markAsDelivered,
 };
